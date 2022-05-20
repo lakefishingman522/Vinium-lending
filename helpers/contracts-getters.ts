@@ -215,13 +215,16 @@ export const getPairsTokenAggregator = (
     const aggregatorAddressIndex = Object.keys(aggregatorsAddresses).findIndex(
       (value) => value === tokenSymbol
     );
-    const [, aggregatorAddress] = (
-      Object.entries(aggregatorsAddresses) as [string, tEthereumAddress][]
-    )[aggregatorAddressIndex];
-    return [tokenAddress, aggregatorAddress];
-    //}
-  }) as [string, string][];
 
+    if (aggregatorAddressIndex > -1) {
+      const [, aggregatorAddress] = (
+        Object.entries(aggregatorsAddresses) as [string, tEthereumAddress][]
+      )[aggregatorAddressIndex];
+      return [tokenAddress, aggregatorAddress];
+    }
+    //}
+  }).filter(item => item !== undefined) as [string, string][];
+  // console.log(pairs)
   const mappedPairs = pairs.map(([asset]) => asset);
   const mappedAggregators = pairs.map(([, source]) => source);
 

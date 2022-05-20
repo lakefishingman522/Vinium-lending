@@ -104,7 +104,8 @@
     "print-config:kovan": "hardhat --network kovan print-config --pool Aave --data-provider 0xA1901785c29cBd48bfA74e46b67C736b26054fa4",
     "external:deploy-assets-kovan": "npm run compile && hardhat --network kovan external:deploy-new-asset --symbol ${SYMBOL} --verify",
     "external:deploy-assets-main": "npm run compile && hardhat --network main external:deploy-new-asset --symbol ${SYMBOL} --verify",
-    "prepublishOnly": "npm run compile"
+    "prepublishOnly": "npm run compile",
+    "deploy": "npx hardhat run scripts/deploy.js"
   },
   "devDependencies": {
     "@nomiclabs/buidler": "^1.4.7",
@@ -170,6 +171,7 @@
   ],
   "license": "AGPLv3",
   "dependencies": {
+    "@aave/protocol-v2": "^1.0.1",
     "axios-curlirize": "^1.3.7",
     "tmp-promise": "^3.0.2"
   },
