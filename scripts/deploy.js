@@ -1,10 +1,10 @@
 const main = async () => {
     
-    const LPproviderContractFactory = await hre.ethers.getContractFactory('LendingPoolAddressesProvider');
-    const marketid = 'Avalanche';
-    const lpProviderContract = await LPproviderContractFactory.deploy(marketid);                     
-    await lpProviderContract.deployed();
-    console.log("LendingPoolAddressesProvider deployed to:", lpProviderContract.address);
+    // const LPproviderContractFactory = await hre.ethers.getContractFactory('LendingPoolAddressesProvider');
+    // const marketid = 'Avalanche';
+    // const lpProviderContract = await LPproviderContractFactory.deploy(marketid);                     
+    // await lpProviderContract.deployed();
+    // console.log("LendingPoolAddressesProvider deployed to:", lpProviderContract.address);
 
     const LPproviderRegistryContractFactory = await hre.ethers.getContractFactory('LendingPoolAddressesProviderRegistry');
     const lpProviderRegistryContract = await LPproviderRegistryContractFactory.deploy();                     
