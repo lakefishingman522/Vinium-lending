@@ -6,10 +6,10 @@ const main = async () => {
     // await lpProviderContract.deployed();
     // console.log("LendingPoolAddressesProvider deployed to:", lpProviderContract.address);
 
-    const LPproviderRegistryContractFactory = await hre.ethers.getContractFactory('LendingPoolAddressesProviderRegistry');
-    const lpProviderRegistryContract = await LPproviderRegistryContractFactory.deploy();                     
-    await lpProviderRegistryContract.deployed();
-    console.log("LendingPoolAddressesProviderRegistry deployed to:", lpProviderRegistryContract.address);
+    // const LPproviderRegistryContractFactory = await hre.ethers.getContractFactory('LendingPoolAddressesProviderRegistry');
+    // const lpProviderRegistryContract = await LPproviderRegistryContractFactory.deploy();                     
+    // await lpProviderRegistryContract.deployed();
+    // console.log("LendingPoolAddressesProviderRegistry deployed to:", lpProviderRegistryContract.address);
 
     const LFactoryReserveLogic = await hre.ethers.getContractFactory('ReserveLogic');
     const ReserveLogicLibrary = await LFactoryReserveLogic.deploy();                     
