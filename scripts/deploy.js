@@ -76,7 +76,8 @@ const main = async () => {
 npx hardhat full:deploy-address-provider-registry --pool Avalanche --network fuji
 npx hardhat full:deploy-address-provider --pool Avalanche --network fuji
 npx hardhat full:deploy-lending-pool --pool Avalanche --network fuji
-npx hardhat full:data-provider --pool Avalanche --network fuji
+npx hardhat full:deploy-oracles --pool Avalanche --network fuji
+npx hardhat full:data-provider --network fuji
 npx hardhat full-deploy-weth-gateway --pool Avalanche --network fuji
 npx hardhat full:initialize-lending-pool --pool Avalanche --network fuji
 

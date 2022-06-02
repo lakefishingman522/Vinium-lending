@@ -83,11 +83,15 @@ export const initReservesByHelper = async (
 
   const reserves = Object.entries(reservesParams);
 
+  // console.log(reserves)
   for (let [symbol, params] of reserves) {
+    console.log(symbol);
     if (!tokenAddresses[symbol]) {
       console.log(`- Skipping init of ${symbol} due token address is not set at markets config`);
       continue;
     }
+    // console.log(params)
+
     const { strategy, aTokenImpl, reserveDecimals } = params;
     const {
       optimalUtilizationRate,
@@ -113,7 +117,6 @@ export const initReservesByHelper = async (
         rateStrategies[strategy.name],
         verify
       );
-
       // This causes the last strategy to be printed twice, once under "DefaultReserveInterestRateStrategy"
       // and once under the actual `strategyASSET` key.
       rawInsertContractAddressInDb(strategy.name, strategyAddresses[strategy.name]);
@@ -153,6 +156,9 @@ export const initReservesByHelper = async (
   const configurator = await getLendingPoolConfiguratorProxy();
 
   console.log(`- Reserves initialization in ${chunkedInitInputParams.length} txs`);
+
+  console.log(chunkedInitInputParams);
+
   for (let chunkIndex = 0; chunkIndex < chunkedInitInputParams.length; chunkIndex++) {
     const tx3 = await waitForTx(
       await configurator.batchInitReserve(chunkedInitInputParams[chunkIndex])

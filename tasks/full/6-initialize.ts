@@ -45,27 +45,28 @@ task('full:initialize-lending-pool', 'Initialize lending pool configuration.')
       const testHelpers = await getAaveProtocolDataProvider();
 
       const admin = await addressesProvider.getPoolAdmin();
+      console.log('admin ==' + admin);
       const oracle = await addressesProvider.getPriceOracle();
+      console.log('oracle ==' + oracle);
 
       if (!reserveAssets) {
         throw 'Reserve assets is undefined. Check ReserveAssets configuration at config directory';
       }
 
       const treasuryAddress = await getTreasuryAddress(poolConfig);
-
-      await initReservesByHelper(
-        ReservesConfig,
-        reserveAssets,
-        ATokenNamePrefix,
-        StableDebtTokenNamePrefix,
-        VariableDebtTokenNamePrefix,
-        SymbolPrefix,
-        admin,
-        treasuryAddress,
-        incentivesController,
-        pool,
-        verify
-      );
+      // await initReservesByHelper(
+      //   ReservesConfig,
+      //   reserveAssets,
+      //   ATokenNamePrefix,
+      //   StableDebtTokenNamePrefix,
+      //   VariableDebtTokenNamePrefix,
+      //   SymbolPrefix,
+      //   admin,
+      //   treasuryAddress,
+      //   incentivesController,
+      //   pool,
+      //   verify
+      //   );
       await configureReservesByHelper(ReservesConfig, reserveAssets, testHelpers, admin);
 
       let collateralManagerAddress = await getParamPerNetwork(
@@ -77,7 +78,6 @@ task('full:initialize-lending-pool', 'Initialize lending pool configuration.')
         collateralManagerAddress = collateralManager.address;
       }
       // Seems unnecessary to register the collateral manager in the JSON db
-
       console.log(
         '\tSetting lending pool collateral manager implementation with address',
         collateralManagerAddress
@@ -97,6 +97,7 @@ task('full:initialize-lending-pool', 'Initialize lending pool configuration.')
           aaveProtocolDataProvider.address
         )
       );
+      // console.log('hereherehere')
 
       await deployWalletBalancerProvider(verify);
 
@@ -114,7 +115,7 @@ task('full:initialize-lending-pool', 'Initialize lending pool configuration.')
         gateWay = (await getWETHGateway()).address;
       }
       console.log('GATEWAY', gateWay);
-      await authorizeWETHGateway(gateWay, lendingPoolAddress);
+      // await authorizeWETHGateway(gateWay, lendingPoolAddress);
     } catch (err) {
       console.error(err);
       exit(1);

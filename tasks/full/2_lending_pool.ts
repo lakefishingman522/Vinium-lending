@@ -36,11 +36,12 @@ task('full:deploy-lending-pool', 'Deploy lending pool for dev enviroment')
 
       // Reuse/deploy lending pool implementation
       let lendingPoolImplAddress = getParamPerNetwork(LendingPool, network);
+      console.log('lendingPoolImplAddress' + lendingPoolImplAddress);
       // if (!notFalsyOrZeroAddress(lendingPoolImplAddress)) {
-        console.log('\tDeploying new lending pool implementation & libraries...');
-        const lendingPoolImpl = await deployLendingPool(verify);
-        lendingPoolImplAddress = lendingPoolImpl.address;
-        await lendingPoolImpl.initialize(addressesProvider.address);
+      console.log('\tDeploying new lending pool implementation & libraries...');
+      const lendingPoolImpl = await deployLendingPool(verify);
+      lendingPoolImplAddress = lendingPoolImpl.address;
+      await lendingPoolImpl.initialize(addressesProvider.address);
       // }
       console.log('\tSetting lending pool implementation with address:', lendingPoolImplAddress);
       // Set lending pool impl to Address provider
