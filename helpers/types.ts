@@ -255,6 +255,10 @@ export interface iAssetBase<T> {
   STAKE: T;
   xSUSHI: T;
   WAVAX: T;
+  WINE: T;
+  MIM: T;
+  MGRAPE: T;
+  MGRAPEMIN: T;
 }
 
 export type iAssetsWithoutETH<T> = Omit<iAssetBase<T>, 'ETH'>;
@@ -323,7 +327,8 @@ export type iXDAIPoolAssets<T> = Pick<
 
 export type iAvalanchePoolAssets<T> = Pick<
   iAssetsWithoutUSD<T>,
-  'WETH' | 'DAI' | 'USDT' | 'AAVE' | 'WBTC' | 'WAVAX' | 'USDC'
+  'WETH' | 'DAI' | 'USDT' | 'MIM' | 'WBTC' | 'WAVAX' | 'USDC' | 'WINE' | 'MGRAPE' | 'MGRAPEMIN'
+  // 'WETH' | 'DAI' | 'USDT' | 'AAVE' | 'WBTC' | 'WAVAX' | 'USDC'
 >;
 
 export type iMultiPoolsAssets<T> = iAssetCommon<T> | iAavePoolAssets<T>;

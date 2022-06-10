@@ -45,6 +45,7 @@ task('full:deploy-oracles', 'Deploy oracles for dev enviroment')
       const tokensToWatch: SymbolMap<string> = {
         ...reserveAssets,
         USD: UsdAddress,
+        WINE: '0xC55036B5348CfB45a932481744645985010d3A44',
       };
 
       const [tokens, aggregators] = getPairsTokenAggregator(
@@ -60,7 +61,6 @@ task('full:deploy-oracles', 'Deploy oracles for dev enviroment')
         console.log('here');
         aaveOracle = await getAaveOracle(aaveOracleAddress);
         // await waitForTx(await aaveOracle.setAssetSources(tokens, aggregators));
-        
       } else {
         console.log('there');
         aaveOracle = await deployAaveOracle(
