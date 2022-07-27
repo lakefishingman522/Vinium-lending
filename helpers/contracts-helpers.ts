@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Contract, Signer, utils, ethers, BigNumberish } from 'ethers';
 import { signTypedData_v4 } from 'eth-sig-util';
 import { fromRpcSig, ECDSASignature } from 'ethereumjs-util';

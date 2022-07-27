@@ -224,3 +224,13 @@ await DAI.connect(signer).approve(lendingPool.address, ethers.utils.parseUnits('
 // Deposit 100 DAI
 await lendingPool.connect(signer).deposit(DAI.address, ethers.utils.parseUnits('100'), await signer.getAddress(), '0');
 ```
+
+
+
+npx hardhat full:deploy-address-provider-registry --pool Avalanche --network fuji
+npx hardhat full:deploy-address-provider --pool Avalanche --network fuji
+npx hardhat full:deploy-lending-pool --pool Avalanche --network fuji
+npx hardhat full:deploy-oracles --pool Avalanche --network fuji
+npx hardhat full:data-provider --network fuji
+npx hardhat full-deploy-weth-gateway --pool Avalanche --network fuji
+npx hardhat full:initialize-lending-pool --pool Avalanche --network fuji

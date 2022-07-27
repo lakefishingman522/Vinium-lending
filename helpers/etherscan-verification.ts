@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { exit } from 'process';
 import fs from 'fs';
 import { file } from 'tmp-promise';
@@ -14,7 +15,7 @@ const okErrors = [`Contract source code already verified`];
 
 const unableVerifyError = 'Fail - Unable to verify';
 
-export const SUPPORTED_ETHERSCAN_NETWORKS = ['main', 'ropsten', 'kovan', 'matic', 'mumbai'];
+export const SUPPORTED_ETHERSCAN_NETWORKS = ['main', 'ropsten', 'kovan', 'matic', 'mumbai', 'fuji'];
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));

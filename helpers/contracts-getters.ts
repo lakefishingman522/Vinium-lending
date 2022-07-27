@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {
   AaveProtocolDataProviderFactory,
   ATokenFactory,
@@ -210,20 +211,22 @@ export const getPairsTokenAggregator = (
     getQuoteCurrencies(oracleQuoteCurrency)
   );
 
-  const pairs = Object.entries(assetsWithoutQuoteCurrency).map(([tokenSymbol, tokenAddress]) => {
-    //if (true/*tokenSymbol !== 'WETH' && tokenSymbol !== 'ETH' && tokenSymbol !== 'LpWETH'*/) {
-    const aggregatorAddressIndex = Object.keys(aggregatorsAddresses).findIndex(
-      (value) => value === tokenSymbol
-    );
+  const pairs = Object.entries(assetsWithoutQuoteCurrency)
+    .map(([tokenSymbol, tokenAddress]) => {
+      //if (true/*tokenSymbol !== 'WETH' && tokenSymbol !== 'ETH' && tokenSymbol !== 'LpWETH'*/) {
+      const aggregatorAddressIndex = Object.keys(aggregatorsAddresses).findIndex(
+        (value) => value === tokenSymbol
+      );
 
-    if (aggregatorAddressIndex > -1) {
-      const [, aggregatorAddress] = (
-        Object.entries(aggregatorsAddresses) as [string, tEthereumAddress][]
-      )[aggregatorAddressIndex];
-      return [tokenAddress, aggregatorAddress];
-    }
-    //}
-  }).filter(item => item !== undefined) as [string, string][];
+      if (aggregatorAddressIndex > -1) {
+        const [, aggregatorAddress] = (
+          Object.entries(aggregatorsAddresses) as [string, tEthereumAddress][]
+        )[aggregatorAddressIndex];
+        return [tokenAddress, aggregatorAddress];
+      }
+      //}
+    })
+    .filter((item) => item !== undefined) as [string, string][];
   // console.log(pairs)
   const mappedPairs = pairs.map(([asset]) => asset);
   const mappedAggregators = pairs.map(([, source]) => source);
@@ -427,23 +430,26 @@ export const getFlashLiquidationAdapter = async (address?: tEthereumAddress) =>
 export const getMockParaSwapAugustus = async (address?: tEthereumAddress) =>
   await MockParaSwapAugustusFactory.connect(
     address ||
-      (await getDb().get(`${eContractid.MockParaSwapAugustus}.${DRE.network.name}`).value())
-        .address,
+      (
+        await getDb().get(`${eContractid.MockParaSwapAugustus}.${DRE.network.name}`).value()
+      ).address,
     await getFirstSigner()
   );
 
 export const getMockParaSwapAugustusRegistry = async (address?: tEthereumAddress) =>
   await MockParaSwapAugustusRegistryFactory.connect(
     address ||
-      (await getDb().get(`${eContractid.MockParaSwapAugustusRegistry}.${DRE.network.name}`).value())
-        .address,
+      (
+        await getDb().get(`${eContractid.MockParaSwapAugustusRegistry}.${DRE.network.name}`).value()
+      ).address,
     await getFirstSigner()
   );
 
 export const getParaSwapLiquiditySwapAdapter = async (address?: tEthereumAddress) =>
   await ParaSwapLiquiditySwapAdapterFactory.connect(
     address ||
-      (await getDb().get(`${eContractid.ParaSwapLiquiditySwapAdapter}.${DRE.network.name}`).value())
-        .address,
+      (
+        await getDb().get(`${eContractid.ParaSwapLiquiditySwapAdapter}.${DRE.network.name}`).value()
+      ).address,
     await getFirstSigner()
   );

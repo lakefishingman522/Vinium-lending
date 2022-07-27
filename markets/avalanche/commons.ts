@@ -82,12 +82,13 @@ export const CommonsConfig: ICommonConfiguration = {
   ProviderRegistry: {
     [eAvalancheNetwork.avalanche]: '',
     // [eAvalancheNetwork.fuji]: '0x06eC0BDC3997EE32Cb5B66a1B9C11d92e2C27Aab',
-    [eAvalancheNetwork.fuji]: '0x41AD1C887CfF08e6B15368A1422b39Ab60fc9f72',
+    //[eAvalancheNetwork.fuji]: '0x41AD1C887CfF08e6B15368A1422b39Ab60fc9f72',
+    [eAvalancheNetwork.fuji]: '0xEA2B8CA74b5f48601f9FCD77119a15f1981C064C',
   },
   ProviderRegistryOwner: {
     [eAvalancheNetwork.avalanche]: '',
     // [eAvalancheNetwork.fuji]: '0x1128d177BdaA74Ae68EB06e693f4CbA6BF427a5e',
-    [eAvalancheNetwork.fuji]: '0x52285230e62ac2f4a9caab90a8f7906d126b7b51',
+    [eAvalancheNetwork.fuji]: '0xEA2B8CA74b5f48601f9FCD77119a15f1981C064C',
   },
   LendingRateOracle: {
     [eAvalancheNetwork.avalanche]: '',
