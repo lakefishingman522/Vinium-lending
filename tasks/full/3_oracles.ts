@@ -28,6 +28,7 @@ task('full:deploy-oracles', 'Deploy oracles for dev enviroment')
 
       const network = <eNetwork>DRE.network.name;
       const poolConfig = loadPoolConfig(pool);
+      // console.log('poolConfig ==' + poolConfig);
       const {
         ProtocolGlobalParams: { UsdAddress },
         ReserveAssets,
@@ -41,28 +42,31 @@ task('full:deploy-oracles', 'Deploy oracles for dev enviroment')
       const lendingRateOracleAddress = getParamPerNetwork(poolConfig.LendingRateOracle, network);
       const fallbackOracleAddress = await getParamPerNetwork(FallbackOracle, network);
       const reserveAssets = await getParamPerNetwork(ReserveAssets, network);
+      // console.log('reserveAssets ==' + reserveAssets);
       const chainlinkAggregators = await getParamPerNetwork(ChainlinkAggregator, network);
       const tokensToWatch: SymbolMap<string> = {
         ...reserveAssets,
         USD: UsdAddress,
         WINE: '0xC55036B5348CfB45a932481744645985010d3A44',
       };
-
+      console.log('tokensToWatch ==' + JSON.stringify(tokensToWatch));
+      console.log('chainlinkAggregators ==' + chainlinkAggregators);
+      console.log('poolConfig.OracleQuoteCurrency ==' + poolConfig.OracleQuoteCurrency);
       const [tokens, aggregators] = getPairsTokenAggregator(
         tokensToWatch,
         chainlinkAggregators,
         poolConfig.OracleQuoteCurrency
       );
+      console.log('there', tokens);
+      console.log('there', aggregators);
 
       let aaveOracle: AaveOracle;
       let lendingRateOracle: LendingRateOracle;
 
       if (notFalsyOrZeroAddress(aaveOracleAddress)) {
-        console.log(aaveOracleAddress);
-        aaveOracle = await getAaveOracle(aaveOracleAddress);
-        // await waitForTx(await aaveOracle.setAssetSources(tokens, aggregators));
+        aaveOracle = await await getAaveOracle(aaveOracleAddress);
+        await waitForTx(await aaveOracle.setAssetSources(tokens, aggregators));
       } else {
-        console.log('there');
         aaveOracle = await deployAaveOracle(
           [
             tokens,

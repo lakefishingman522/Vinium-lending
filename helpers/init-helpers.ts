@@ -43,7 +43,7 @@ export const initReservesByHelper = async (
   verify: boolean
 ) => {
   const addressProvider = await getLendingPoolAddressesProvider();
-
+  console.log('addressProvider ==' + addressProvider.address);
   // CHUNK CONFIGURATION
   const initChunks = 1;
 
@@ -157,9 +157,12 @@ export const initReservesByHelper = async (
 
   console.log(`- Reserves initialization in ${chunkedInitInputParams.length} txs`);
 
-  console.log(chunkedInitInputParams);
+  // console.log(chunkedInitInputParams.length);
 
-  for (let chunkIndex = 0; chunkIndex < chunkedInitInputParams.length; chunkIndex++) {
+  // for (let chunkIndex = 0; chunkIndex < chunkedInitInputParams.length; chunkIndex++) {
+  for (let chunkIndex = 0; chunkIndex < 4; chunkIndex++) {
+    console.log(chunkIndex);
+    console.log(chunkedInitInputParams[chunkIndex]);
     const tx3 = await waitForTx(
       await configurator.batchInitReserve(chunkedInitInputParams[chunkIndex])
     );

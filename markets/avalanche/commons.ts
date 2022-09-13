@@ -92,7 +92,8 @@ export const CommonsConfig: ICommonConfiguration = {
   },
   LendingRateOracle: {
     [eAvalancheNetwork.avalanche]: '',
-    [eAvalancheNetwork.fuji]: '0xEbBD998B7Dc2a8E675F0859d907c8Fa6027aBc7b',
+    // [eAvalancheNetwork.fuji]: '0xEbBD998B7Dc2a8E675F0859d907c8Fa6027aBc7b',
+    [eAvalancheNetwork.fuji]: '',
   },
   LendingPoolCollateralManager: {
     [eAvalancheNetwork.avalanche]: '',
@@ -104,7 +105,8 @@ export const CommonsConfig: ICommonConfiguration = {
   },
   LendingPool: {
     [eAvalancheNetwork.avalanche]: '',
-    [eAvalancheNetwork.fuji]: '0x5f3968A2E41C95A95329333d44AB989de6c43f8E',
+    // [eAvalancheNetwork.fuji]: '0x5f3968A2E41C95A95329333d44AB989de6c43f8E',
+    [eAvalancheNetwork.fuji]: '',
   },
   WethGateway: {
     [eAvalancheNetwork.avalanche]: '',
@@ -116,7 +118,8 @@ export const CommonsConfig: ICommonConfiguration = {
   },
   AaveOracle: {
     [eAvalancheNetwork.avalanche]: '',
-    [eAvalancheNetwork.fuji]: '0xD217DdD9f0Af84644dEFe84a0b634621D4617a29',
+    // [eAvalancheNetwork.fuji]: '0xfa4f5B081632c4709667D467F817C09d9008A46A',
+    [eAvalancheNetwork.fuji]: '',
   },
   FallbackOracle: {
     [eAvalancheNetwork.avalanche]: ZERO_ADDRESS,

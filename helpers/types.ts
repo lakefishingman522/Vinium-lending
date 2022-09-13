@@ -327,8 +327,9 @@ export type iXDAIPoolAssets<T> = Pick<
 
 export type iAvalanchePoolAssets<T> = Pick<
   iAssetsWithoutUSD<T>,
-  'WETH' | 'DAI' | 'USDT' | 'MIM' | 'WBTC' | 'WAVAX' | 'USDC' | 'WINE' | 'MGRAPE' | 'MGRAPEMIN'
-  // 'WETH' | 'DAI' | 'USDT' | 'AAVE' | 'WBTC' | 'WAVAX' | 'USDC'
+  // 'WETH'| 'USDT'
+  // 'WETH' | 'DAI' | 'USDT' | 'MIM' | 'WBTC' | 'WAVAX' | 'USDC' | 'WINE' | 'MGRAPE' | 'MGRAPEMIN'
+  'WETH' | 'USDT' | 'WBTC' | 'WAVAX'
 >;
 
 export type iMultiPoolsAssets<T> = iAssetCommon<T> | iAavePoolAssets<T>;

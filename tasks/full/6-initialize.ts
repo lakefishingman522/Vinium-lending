@@ -54,25 +54,28 @@ task('full:initialize-lending-pool', 'Initialize lending pool configuration.')
       }
 
       const treasuryAddress = await getTreasuryAddress(poolConfig);
-      // await initReservesByHelper(
-      //   ReservesConfig,
-      //   reserveAssets,
-      //   ATokenNamePrefix,
-      //   StableDebtTokenNamePrefix,
-      //   VariableDebtTokenNamePrefix,
-      //   SymbolPrefix,
-      //   admin,
-      //   treasuryAddress,
-      //   incentivesController,
-      //   pool,
-      //   verify
-      //   );
+      console.log('treasuryAddress ==' + treasuryAddress);
+      await initReservesByHelper(
+        ReservesConfig,
+        reserveAssets,
+        ATokenNamePrefix,
+        StableDebtTokenNamePrefix,
+        VariableDebtTokenNamePrefix,
+        SymbolPrefix,
+        admin,
+        treasuryAddress,
+        incentivesController,
+        pool,
+        verify
+      );
       await configureReservesByHelper(ReservesConfig, reserveAssets, testHelpers, admin);
 
       let collateralManagerAddress = await getParamPerNetwork(
         LendingPoolCollateralManager,
         network
       );
+
+      console.log('collateralManagerAddress ==' + collateralManagerAddress);
       if (!notFalsyOrZeroAddress(collateralManagerAddress)) {
         const collateralManager = await deployLendingPoolCollateralManager(verify);
         collateralManagerAddress = collateralManager.address;
@@ -97,9 +100,12 @@ task('full:initialize-lending-pool', 'Initialize lending pool configuration.')
           aaveProtocolDataProvider.address
         )
       );
-      // console.log('hereherehere')
 
       await deployWalletBalancerProvider(verify);
+
+      console.log(localBRE.network.name);
+      console.log(chainlinkAggregatorProxy[localBRE.network.name]);
+      console.log(chainlinkEthUsdAggregatorProxy[localBRE.network.name]);
 
       const uiPoolDataProvider = await deployUiPoolDataProviderV2(
         chainlinkAggregatorProxy[localBRE.network.name],
@@ -109,7 +115,7 @@ task('full:initialize-lending-pool', 'Initialize lending pool configuration.')
       console.log('UiPoolDataProvider deployed at:', uiPoolDataProvider.address);
 
       const lendingPoolAddress = await addressesProvider.getLendingPool();
-
+      console.log('lendingPoolAddress ==' + lendingPoolAddress);
       let gateWay = getParamPerNetwork(WethGateway, network);
       if (!notFalsyOrZeroAddress(gateWay)) {
         gateWay = (await getWETHGateway()).address;
