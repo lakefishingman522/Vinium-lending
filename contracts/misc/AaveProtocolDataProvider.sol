@@ -15,7 +15,7 @@ contract AaveProtocolDataProvider {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using UserConfiguration for DataTypes.UserConfigurationMap;
 
-  address constant MKR = 0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2;
+  address constant MKR = 0x88128fd4b259552A9A1D457f435a6527AAb72d42;
   address constant ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
   struct TokenData {
