@@ -22,8 +22,7 @@ require('dotenv').config();
 
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-waffle';
-// import 'temp-hardhat-etherscan';
-import '@nomiclabs/hardhat-etherscan';
+import 'temp-hardhat-etherscan';
 import 'hardhat-gas-reporter';
 import 'hardhat-typechain';
 import '@tenderly/hardhat-tenderly';
@@ -109,6 +108,7 @@ const buidlerConfig: HardhatUserConfig = {
     xdai: getCommonNetworkConfig(eXDaiNetwork.xdai, 100),
     avalanche: getCommonNetworkConfig(eAvalancheNetwork.avalanche, 43114),
     fuji: getCommonNetworkConfig(eAvalancheNetwork.fuji, 43113),
+    goerli: getCommonNetworkConfig(eEthereumNetwork.goerli, 5),
     hardhat: {
       hardfork: 'berlin',
       blockGasLimit: DEFAULT_BLOCK_GAS_LIMIT,
