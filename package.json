@@ -10,6 +10,7 @@
     "run-env": "npm i && tail -f /dev/null",
     "hardhat": "hardhat",
     "hardhat:kovan": "hardhat --network kovan",
+    "hardhat:goerli": "hardhat --network goerli",
     "hardhat:tenderly-main": "hardhat --network tenderlyMain",
     "hardhat:ropsten": "hardhat --network ropsten",
     "hardhat:main": "hardhat --network main",
@@ -36,6 +37,7 @@
     "amm:kovan:full:migration": "npm run compile && npm run hardhat:kovan -- amm:mainnet --skip-registry",
     "aave:docker:full:migration:add-registry": "npm run compile && npm run hardhat:docker -- aave:mainnet",
     "aave:kovan:full:migration:add-registry": "npm run compile && npm run hardhat:kovan -- aave:mainnet",
+    "aave:goerli:full:migration:add-registry": "npm run compile && npm run hardhat:goerli -- aave:testnet",
     "matic:mumbai:full:migration:add-registry": "npm run compile && npm run hardhat:mumbai sidechain:mainnet -- --pool Matic",
     "matic:matic:full:migration:add-registry": "npm run compile && npm run hardhat:matic sidechain:mainnet -- --pool Matic",
     "amm:kovan:full:migration:add-registry": "npm run compile && npm run hardhat:kovan -- amm:mainnet",
@@ -104,8 +106,7 @@
     "print-config:kovan": "hardhat --network kovan print-config --pool Aave --data-provider 0xA1901785c29cBd48bfA74e46b67C736b26054fa4",
     "external:deploy-assets-kovan": "npm run compile && hardhat --network kovan external:deploy-new-asset --symbol ${SYMBOL} --verify",
     "external:deploy-assets-main": "npm run compile && hardhat --network main external:deploy-new-asset --symbol ${SYMBOL} --verify",
-    "prepublishOnly": "npm run compile",
-    "deploy": "npx hardhat run scripts/deploy.js"
+    "prepublishOnly": "npm run compile"
   },
   "devDependencies": {
     "@nomiclabs/buidler": "^1.4.7",
@@ -113,7 +114,6 @@
     "@nomiclabs/buidler-etherscan": "^2.1.0",
     "@nomiclabs/buidler-waffle": "2.0.0",
     "@nomiclabs/hardhat-ethers": "^2.0.0",
-    "@nomiclabs/hardhat-etherscan": "^3.1.0",
     "@nomiclabs/hardhat-waffle": "^2.0.0",
     "@openzeppelin/contracts": "3.1.0",
     "@tenderly/hardhat-tenderly": "1.1.0-beta.5",
@@ -154,7 +154,7 @@
     "tslint-config-prettier": "^1.18.0",
     "tslint-plugin-prettier": "^2.3.0",
     "typechain": "^4.0.0",
-    "typescript": "^4.7.4"
+    "typescript": "^4.0.5"
   },
   "husky": {
     "hooks": {
@@ -172,7 +172,6 @@
   ],
   "license": "AGPLv3",
   "dependencies": {
-    "@aave/protocol-v2": "^1.0.1",
     "axios-curlirize": "^1.3.7",
     "tmp-promise": "^3.0.2"
   },
