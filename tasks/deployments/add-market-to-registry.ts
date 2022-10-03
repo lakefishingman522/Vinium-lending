@@ -22,11 +22,7 @@ task('add-market-to-registry', 'Adds address provider to registry')
     await DRE.run('set-DRE');
     let signer: Signer;
     const network = <eNetwork>DRE.network.name;
-    // console.log('network');
-    // console.log(network);
     const poolConfig = loadPoolConfig(pool);
-    console.log('poolConfig');
-    // console.log(poolConfig);
     const { ProviderId } = poolConfig;
 
     let providerRegistryAddress = getParamPerNetwork(poolConfig.ProviderRegistry, network);

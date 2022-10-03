@@ -14,18 +14,16 @@ task('full:deploy-address-provider-registry', 'Deploy address provider registry'
     console.log('prior dre');
     await DRE.run('set-DRE');
     const poolConfig = loadPoolConfig(pool);
-    // console.log(poolConfig);
     const network = <eNetwork>DRE.network.name;
-    // console.log(network);
     const signer = await getFirstSigner();
 
     console.log('Deployer:', await signer.getAddress(), formatEther(await signer.getBalance()));
 
     const providerRegistryAddress = getParamPerNetwork(poolConfig.ProviderRegistry, network);
-    console.log('providerRegistryAddress', providerRegistryAddress);
+
     console.log('Signer', await signer.getAddress());
     console.log('Balance', formatEther(await signer.getBalance()));
-    // if hardhat network; if condition does not need
+
     if (notFalsyOrZeroAddress(providerRegistryAddress)) {
       console.log('Already deployed Provider Registry Address at', providerRegistryAddress);
     } else {
