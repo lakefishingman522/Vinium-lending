@@ -2,7 +2,7 @@ import { eContractid, IReserveParams } from '../../helpers/types';
 
 import { rateStrategyStableOne, rateStrategyVolatileOne } from './rateStrategies';
 
-export const strategyWAVAX: IReserveParams = {
+export const strategySAVAX: IReserveParams = {
   strategy: rateStrategyVolatileOne,
   baseLTVAsCollateral: '5000',
   liquidationThreshold: '6500',
@@ -14,52 +14,14 @@ export const strategyWAVAX: IReserveParams = {
   reserveFactor: '1500',
 };
 
-export const strategyWETH: IReserveParams = {
-  strategy: rateStrategyVolatileOne,
-  baseLTVAsCollateral: '8000',
-  liquidationThreshold: '8250',
-  liquidationBonus: '10500',
-  borrowingEnabled: true,
-  stableBorrowRateEnabled: false,
-  reserveDecimals: '18',
-  aTokenImpl: eContractid.AToken,
-  reserveFactor: '1000',
-};
-
-export const strategyWBTC: IReserveParams = {
-  strategy: rateStrategyVolatileOne,
-  baseLTVAsCollateral: '6000',
-  liquidationThreshold: '7500',
-  liquidationBonus: '10500',
-  borrowingEnabled: true,
-  stableBorrowRateEnabled: false,
-  reserveDecimals: '8',
-  aTokenImpl: eContractid.AToken,
-  reserveFactor: '1000',
-};
-
-export const strategyAAVE: IReserveParams = {
-  strategy: rateStrategyVolatileOne,
-  baseLTVAsCollateral: '4000',
-  liquidationThreshold: '6500',
-  liquidationBonus: '11000',
-  borrowingEnabled: false,
-  stableBorrowRateEnabled: false,
-  reserveDecimals: '18',
-  aTokenImpl: eContractid.AToken,
-  reserveFactor: '2000',
-};
-
-
-
-export const strategyDAI: IReserveParams = {
+export const strategyUSDC: IReserveParams = {
   strategy: rateStrategyStableOne,
   baseLTVAsCollateral: '7500',
   liquidationThreshold: '8000',
   liquidationBonus: '10500',
   borrowingEnabled: true,
   stableBorrowRateEnabled: false,
-  reserveDecimals: '18',
+  reserveDecimals: '6',
   aTokenImpl: eContractid.AToken,
   reserveFactor: '1000',
 };
@@ -76,21 +38,90 @@ export const strategyUSDT: IReserveParams = {
   reserveFactor: '1000',
 };
 
-export const strategyUSDC: IReserveParams = {
+export const strategyDAI: IReserveParams = {
   strategy: rateStrategyStableOne,
   baseLTVAsCollateral: '7500',
   liquidationThreshold: '8000',
   liquidationBonus: '10500',
   borrowingEnabled: true,
   stableBorrowRateEnabled: false,
-  reserveDecimals: '6',
+  reserveDecimals: '18',
   aTokenImpl: eContractid.AToken,
   reserveFactor: '1000',
 };
 
+export const strategyWETH: IReserveParams = {
+  strategy: rateStrategyVolatileOne,
+  baseLTVAsCollateral: '8000',
+  liquidationThreshold: '8250',
+  liquidationBonus: '10500',
+  borrowingEnabled: true,
+  stableBorrowRateEnabled: false,
+  reserveDecimals: '18',
+  aTokenImpl: eContractid.AToken,
+  reserveFactor: '1000',
+};
 
+export const strategyBTCB: IReserveParams = {
+  strategy: rateStrategyVolatileOne,
+  baseLTVAsCollateral: '6000',
+  liquidationThreshold: '7500',
+  liquidationBonus: '10500',
+  borrowingEnabled: true,
+  stableBorrowRateEnabled: false,
+  reserveDecimals: '8',
+  aTokenImpl: eContractid.AToken,
+  reserveFactor: '1000',
+};
 
-// 
+export const strategyWBTC: IReserveParams = {
+  strategy: rateStrategyVolatileOne,
+  baseLTVAsCollateral: '6000',
+  liquidationThreshold: '7500',
+  liquidationBonus: '10500',
+  borrowingEnabled: true,
+  stableBorrowRateEnabled: false,
+  reserveDecimals: '8',
+  aTokenImpl: eContractid.AToken,
+  reserveFactor: '1000',
+};
+
+export const strategyGRAPE: IReserveParams = {
+  strategy: rateStrategyVolatileOne,
+  baseLTVAsCollateral: '5000',
+  liquidationThreshold: '6500',
+  liquidationBonus: '11000',
+  borrowingEnabled: false,
+  stableBorrowRateEnabled: false,
+  reserveDecimals: '18',
+  aTokenImpl: eContractid.AToken,
+  reserveFactor: '1500',
+};
+
+export const strategyWAVAX: IReserveParams = {
+  strategy: rateStrategyVolatileOne,
+  baseLTVAsCollateral: '5000',
+  liquidationThreshold: '6500',
+  liquidationBonus: '11000',
+  borrowingEnabled: true,
+  stableBorrowRateEnabled: false,
+  reserveDecimals: '18',
+  aTokenImpl: eContractid.AToken,
+  reserveFactor: '1500',
+};
+
+export const strategyAAVE: IReserveParams = {
+  strategy: rateStrategyVolatileOne,
+  baseLTVAsCollateral: '4000',
+  liquidationThreshold: '6500',
+  liquidationBonus: '11000',
+  borrowingEnabled: false,
+  stableBorrowRateEnabled: false,
+  reserveDecimals: '18',
+  aTokenImpl: eContractid.AToken,
+  reserveFactor: '2000',
+};
+
 export const strategyMIM: IReserveParams = {
   strategy: rateStrategyVolatileOne,
   baseLTVAsCollateral: '4000',
@@ -114,17 +145,7 @@ export const strategyWINE: IReserveParams = {
   aTokenImpl: eContractid.AToken,
   reserveFactor: '2000',
 };
-export const strategyMGRAPE: IReserveParams = {
-  strategy: rateStrategyVolatileOne,
-  baseLTVAsCollateral: '4000',
-  liquidationThreshold: '6500',
-  liquidationBonus: '11000',
-  borrowingEnabled: false,
-  stableBorrowRateEnabled: false,
-  reserveDecimals: '18',
-  aTokenImpl: eContractid.AToken,
-  reserveFactor: '2000',
-};
+
 export const strategyMGRAPEMIN: IReserveParams = {
   strategy: rateStrategyVolatileOne,
   baseLTVAsCollateral: '4000',
