@@ -14,10 +14,10 @@ import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
 
 /**
  * @title WalletBalanceProvider contract
- * @author Aave, influenced by https://github.com/wbobeirne/eth-balance-checker/blob/master/contracts/BalanceChecker.sol
+ * @author Vini, influenced by https://github.com/wbobeirne/eth-balance-checker/blob/master/contracts/BalanceChecker.sol
  * @notice Implements a logic of getting multiple tokens balance for one user address
- * @dev NOTE: THIS CONTRACT IS NOT USED WITHIN THE AAVE PROTOCOL. It's an accessory contract used to reduce the number of calls
- * towards the blockchain from the Aave backend.
+ * @dev NOTE: THIS CONTRACT IS NOT USED WITHIN THE VINI PROTOCOL. It's an accessory contract used to reduce the number of calls
+ * towards the blockchain from the Vini backend.
  **/
 contract WalletBalanceProvider {
   using Address for address payable;
@@ -93,8 +93,9 @@ contract WalletBalanceProvider {
     uint256[] memory balances = new uint256[](reservesWithEth.length);
 
     for (uint256 j = 0; j < reserves.length; j++) {
-      DataTypes.ReserveConfigurationMap memory configuration =
-        pool.getConfiguration(reservesWithEth[j]);
+      DataTypes.ReserveConfigurationMap memory configuration = pool.getConfiguration(
+        reservesWithEth[j]
+      );
 
       (bool isActive, , , ) = configuration.getFlagsMemory();
 
