@@ -5,6 +5,16 @@ pragma experimental ABIEncoderV2;
 import {ILendingPoolAddressesProvider} from '../../interfaces/ILendingPoolAddressesProvider.sol';
 
 interface IUiPoolDataProviderV3 {
+  struct InterestRates {
+    uint256 variableRateSlope1;
+    uint256 variableRateSlope2;
+    uint256 stableRateSlope1;
+    uint256 stableRateSlope2;
+    uint256 baseStableBorrowRate;
+    uint256 baseVariableBorrowRate;
+    uint256 optimalUsageRatio;
+  }
+
   struct AggregatedReserveData {
     address underlyingAsset;
     string name;
@@ -37,10 +47,14 @@ interface IUiPoolDataProviderV3 {
     uint256 stableDebtLastUpdateTimestamp;
     uint256 totalScaledVariableDebt;
     uint256 priceInMarketReferenceCurrency;
+    address priceOracle;
     uint256 variableRateSlope1;
     uint256 variableRateSlope2;
     uint256 stableRateSlope1;
     uint256 stableRateSlope2;
+    uint256 baseStableBorrowRate;
+    uint256 baseVariableBorrowRate;
+    uint256 optimalUsageRatio;
     // v3
     bool isPaused;
     uint128 accruedToTreasury;
@@ -51,7 +65,7 @@ interface IUiPoolDataProviderV3 {
     uint256 debtCeilingDecimals;
     uint8 eModeCategoryId;
     uint256 borrowCap;
-    uint256 supplyCap; 
+    uint256 supplyCap;
     // eMode
     uint16 eModeLtv;
     uint16 eModeLiquidationThreshold;
@@ -86,15 +100,10 @@ interface IUiPoolDataProviderV3 {
   function getReservesData(ILendingPoolAddressesProvider provider)
     external
     view
-    returns (
-      AggregatedReserveData[] memory,
-      BaseCurrencyInfo memory
-    );
+    returns (AggregatedReserveData[] memory, BaseCurrencyInfo memory);
 
   function getUserReservesData(ILendingPoolAddressesProvider provider, address user)
     external
     view
-    returns (
-      UserReserveData[] memory, uint8
-    );
+    returns (UserReserveData[] memory, uint8);
 }

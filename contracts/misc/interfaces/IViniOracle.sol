@@ -2,11 +2,11 @@
 pragma solidity 0.6.12;
 
 /**
- * @title IAaveOracle interface
- * @notice Interface for the Aave oracle.
+ * @title IViniOracle interface
+ * @notice Interface for the Vini oracle.
  **/
 
-interface IAaveOracle {
+interface IViniOracle {
   function BASE_CURRENCY() external view returns (address); // if usd returns 0x0, if eth returns weth address
 
   function BASE_CURRENCY_UNIT() external view returns (uint256);

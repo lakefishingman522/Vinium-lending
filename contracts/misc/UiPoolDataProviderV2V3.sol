@@ -6,7 +6,7 @@ import {IERC20Detailed} from '../dependencies/openzeppelin/contracts/IERC20Detai
 import {ILendingPoolAddressesProvider} from '../interfaces/ILendingPoolAddressesProvider.sol';
 import {IUiPoolDataProviderV3} from './interfaces/IUiPoolDataProviderV3.sol';
 import {ILendingPool} from '../interfaces/ILendingPool.sol';
-import {IAaveOracle} from './interfaces/IAaveOracle.sol';
+import {IViniOracle} from './interfaces/IViniOracle.sol';
 import {IAToken} from '../interfaces/IAToken.sol';
 import {IVariableDebtToken} from '../interfaces/IVariableDebtToken.sol';
 import {IStableDebtToken} from '../interfaces/IStableDebtToken.sol';
@@ -17,6 +17,7 @@ import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
 import {IChainlinkAggregator} from '../interfaces/IChainlinkAggregator.sol';
 import {DefaultReserveInterestRateStrategy} from '../protocol/lendingpool/DefaultReserveInterestRateStrategy.sol';
 import {IERC20DetailedBytes} from './interfaces/IERC20DetailedBytes.sol';
+import {ILendingRateOracle} from '../interfaces/ILendingRateOracle.sol';
 
 contract UiPoolDataProviderV2V3 is IUiPoolDataProviderV3 {
   using WadRayMath for uint256;
@@ -36,22 +37,23 @@ contract UiPoolDataProviderV2V3 is IUiPoolDataProviderV3 {
     marketReferenceCurrencyPriceInUsdProxyAggregator = _marketReferenceCurrencyPriceInUsdProxyAggregator;
   }
 
-  function getInterestRateStrategySlopes(DefaultReserveInterestRateStrategy interestRateStrategy)
-    internal
-    view
-    returns (
-      uint256,
-      uint256,
-      uint256,
-      uint256
-    )
-  {
-    return (
-      interestRateStrategy.variableRateSlope1(),
-      interestRateStrategy.variableRateSlope2(),
-      interestRateStrategy.stableRateSlope1(),
-      interestRateStrategy.stableRateSlope2()
-    );
+  function getInterestRateStrategySlopes(
+    DefaultReserveInterestRateStrategy interestRateStrategy,
+    ILendingPoolAddressesProvider provider,
+    address reserve
+  ) internal view returns (InterestRates memory) {
+    InterestRates memory interestRates;
+    interestRates.variableRateSlope1 = interestRateStrategy.variableRateSlope1();
+    interestRates.variableRateSlope2 = interestRateStrategy.variableRateSlope2();
+    interestRates.stableRateSlope1 = interestRateStrategy.stableRateSlope1();
+    interestRates.stableRateSlope2 = interestRateStrategy.stableRateSlope2();
+    interestRates.baseVariableBorrowRate = interestRateStrategy.baseVariableBorrowRate();
+    interestRates.optimalUsageRatio = interestRateStrategy.OPTIMAL_UTILIZATION_RATE();
+
+    interestRates.baseStableBorrowRate = ILendingRateOracle(provider.getLendingRateOracle())
+      .getMarketBorrowRate(reserve);
+
+    return interestRates;
   }
 
   function getReservesList(ILendingPoolAddressesProvider provider)
@@ -70,7 +72,7 @@ contract UiPoolDataProviderV2V3 is IUiPoolDataProviderV3 {
     override
     returns (AggregatedReserveData[] memory, BaseCurrencyInfo memory)
   {
-    IAaveOracle oracle = IAaveOracle(provider.getPriceOracle());
+    IViniOracle oracle = IViniOracle(provider.getPriceOracle());
     ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
     address[] memory reserves = lendingPool.getReservesList();
     AggregatedReserveData[] memory reservesData = new AggregatedReserveData[](reserves.length);
@@ -96,6 +98,7 @@ contract UiPoolDataProviderV2V3 is IUiPoolDataProviderV3 {
       reserveData.priceInMarketReferenceCurrency = oracle.getAssetPrice(
         reserveData.underlyingAsset
       );
+      reserveData.priceOracle = oracle.getSourceOfAsset(reserveData.underlyingAsset);
 
       reserveData.availableLiquidity = IERC20Detailed(reserveData.underlyingAsset).balanceOf(
         reserveData.aTokenAddress
@@ -111,9 +114,12 @@ contract UiPoolDataProviderV2V3 is IUiPoolDataProviderV3 {
 
       if (address(reserveData.underlyingAsset) == address(MKRAddress)) {
         bytes32 symbol = IERC20DetailedBytes(reserveData.underlyingAsset).symbol();
+        bytes32 name = IERC20DetailedBytes(reserveData.underlyingAsset).name();
         reserveData.symbol = bytes32ToString(symbol);
+        reserveData.name = bytes32ToString(name);
       } else {
         reserveData.symbol = IERC20Detailed(reserveData.underlyingAsset).symbol();
+        reserveData.name = IERC20Detailed(reserveData.underlyingAsset).name();
       }
 
       (
@@ -130,14 +136,20 @@ contract UiPoolDataProviderV2V3 is IUiPoolDataProviderV3 {
         reserveData.stableBorrowRateEnabled
       ) = baseData.configuration.getFlagsMemory();
       reserveData.usageAsCollateralEnabled = reserveData.baseLTVasCollateral != 0;
-      (
-        reserveData.variableRateSlope1,
-        reserveData.variableRateSlope2,
-        reserveData.stableRateSlope1,
-        reserveData.stableRateSlope2
-      ) = getInterestRateStrategySlopes(
-        DefaultReserveInterestRateStrategy(reserveData.interestRateStrategyAddress)
+
+      InterestRates memory interestRates = getInterestRateStrategySlopes(
+        DefaultReserveInterestRateStrategy(reserveData.interestRateStrategyAddress),
+        provider,
+        reserveData.underlyingAsset
       );
+
+      reserveData.variableRateSlope1 = interestRates.variableRateSlope1;
+      reserveData.variableRateSlope2 = interestRates.variableRateSlope2;
+      reserveData.stableRateSlope1 = interestRates.stableRateSlope1;
+      reserveData.stableRateSlope2 = interestRates.stableRateSlope2;
+      reserveData.baseStableBorrowRate = interestRates.baseStableBorrowRate;
+      reserveData.baseVariableBorrowRate = interestRates.baseVariableBorrowRate;
+      reserveData.optimalUsageRatio = interestRates.optimalUsageRatio;
     }
 
     BaseCurrencyInfo memory baseCurrencyInfo;
@@ -150,8 +162,8 @@ contract UiPoolDataProviderV2V3 is IUiPoolDataProviderV3 {
       if (ETH_CURRENCY_UNIT == baseCurrencyUnit) {
         baseCurrencyInfo.marketReferenceCurrencyUnit = ETH_CURRENCY_UNIT;
         baseCurrencyInfo
-        .marketReferenceCurrencyPriceInUsd = marketReferenceCurrencyPriceInUsdProxyAggregator
-        .latestAnswer();
+          .marketReferenceCurrencyPriceInUsd = marketReferenceCurrencyPriceInUsdProxyAggregator
+          .latestAnswer();
       } else {
         baseCurrencyInfo.marketReferenceCurrencyUnit = baseCurrencyUnit;
         baseCurrencyInfo.marketReferenceCurrencyPriceInUsd = int256(baseCurrencyUnit);

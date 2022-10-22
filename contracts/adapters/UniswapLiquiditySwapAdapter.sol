@@ -10,7 +10,7 @@ import {IERC20} from '../dependencies/openzeppelin/contracts/IERC20.sol';
 /**
  * @title UniswapLiquiditySwapAdapter
  * @notice Uniswap V2 Adapter to swap liquidity.
- * @author Aave
+ * @author Vini
  **/
 contract UniswapLiquiditySwapAdapter is BaseUniswapAdapter {
   struct PermitParams {
@@ -265,8 +265,7 @@ contract UniswapLiquiditySwapAdapter is BaseUniswapAdapter {
       bytes32[] memory r,
       bytes32[] memory s,
       bool[] memory useEthPath
-    ) =
-      abi.decode(
+    ) = abi.decode(
         params,
         (address[], uint256[], bool[], uint256[], uint256[], uint8[], bytes32[], bytes32[], bool[])
       );
