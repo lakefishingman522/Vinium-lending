@@ -26,9 +26,9 @@ interface IUiPoolDataProviderV2 {
     uint128 variableBorrowRate;
     uint128 stableBorrowRate;
     uint40 lastUpdateTimestamp;
-    address aTokenAddress;
-    address stableDebtTokenAddress;
-    address variableDebtTokenAddress;
+    address viTokenAddress;
+    address stableVdTokenAddress;
+    address variableVdTokenAddress;
     address interestRateStrategyAddress;
     //
     uint256 availableLiquidity;
@@ -45,7 +45,7 @@ interface IUiPoolDataProviderV2 {
 
   struct UserReserveData {
     address underlyingAsset;
-    uint256 scaledATokenBalance;
+    uint256 scaledViTokenBalance;
     bool usageAsCollateralEnabledOnUser;
     uint256 stableBorrowRate;
     uint256 scaledVariableDebt;
@@ -68,15 +68,10 @@ interface IUiPoolDataProviderV2 {
   function getReservesData(ILendingPoolAddressesProvider provider)
     external
     view
-    returns (
-      AggregatedReserveData[] memory,
-      BaseCurrencyInfo memory
-    );
+    returns (AggregatedReserveData[] memory, BaseCurrencyInfo memory);
 
   function getUserReservesData(ILendingPoolAddressesProvider provider, address user)
     external
     view
-    returns (
-      UserReserveData[] memory
-    );
+    returns (UserReserveData[] memory);
 }

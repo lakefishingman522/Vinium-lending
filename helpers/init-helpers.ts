@@ -5,11 +5,12 @@ import {
   IReserveParams,
   tEthereumAddress,
 } from './types';
-import { AaveProtocolDataProvider } from '../types/AaveProtocolDataProvider';
+import { ViniumProtocolDataProvider } from '../types/ViniumProtocolDataProvider';
 import { chunk, getDb, waitForTx } from './misc-utils';
 import {
-  getAToken,
-  getATokensAndRatesHelper,
+  getViToken,
+  getViTokensAndRatesHelper,
+  getLendingPool,
   getLendingPoolAddressesProvider,
   getLendingPoolConfiguratorProxy,
 } from './contracts-getters';
@@ -20,10 +21,13 @@ import {
 import { BigNumberish } from 'ethers';
 import { ConfigNames } from './configuration';
 import { deployRateStrategy } from './contracts-deployments';
+import { ZERO_ADDRESS } from './constants';
 
-export const getATokenExtraParams = async (aTokenName: string, tokenAddress: tEthereumAddress) => {
-  console.log(aTokenName);
-  switch (aTokenName) {
+export const getViTokenExtraParams = async (
+  viTokenName: string,
+  tokenAddress: tEthereumAddress
+) => {
+  switch (viTokenName) {
     default:
       return '0x10';
   }
@@ -32,9 +36,9 @@ export const getATokenExtraParams = async (aTokenName: string, tokenAddress: tEt
 export const initReservesByHelper = async (
   reservesParams: iMultiPoolsAssets<IReserveParams>,
   tokenAddresses: { [symbol: string]: tEthereumAddress },
-  aTokenNamePrefix: string,
-  stableDebtTokenNamePrefix: string,
-  variableDebtTokenNamePrefix: string,
+  viTokenNamePrefix: string,
+  stableVdTokenNamePrefix: string,
+  variableVdTokenNamePrefix: string,
   symbolPrefix: string,
   admin: tEthereumAddress,
   treasuryAddress: tEthereumAddress,
@@ -43,7 +47,7 @@ export const initReservesByHelper = async (
   verify: boolean
 ) => {
   const addressProvider = await getLendingPoolAddressesProvider();
-  console.log('addressProvider ==' + addressProvider.address);
+
   // CHUNK CONFIGURATION
   const initChunks = 1;
 
@@ -51,21 +55,21 @@ export const initReservesByHelper = async (
   let reserveSymbols: string[] = [];
 
   let initInputParams: {
-    aTokenImpl: string;
-    stableDebtTokenImpl: string;
-    variableDebtTokenImpl: string;
+    viTokenImpl: string;
+    stableVdTokenImpl: string;
+    variableVdTokenImpl: string;
     underlyingAssetDecimals: BigNumberish;
     interestRateStrategyAddress: string;
     underlyingAsset: string;
     treasury: string;
     incentivesController: string;
     underlyingAssetName: string;
-    aTokenName: string;
-    aTokenSymbol: string;
-    variableDebtTokenName: string;
-    variableDebtTokenSymbol: string;
-    stableDebtTokenName: string;
-    stableDebtTokenSymbol: string;
+    viTokenName: string;
+    viTokenSymbol: string;
+    variableVdTokenName: string;
+    variableVdTokenSymbol: string;
+    stableVdTokenName: string;
+    stableVdTokenSymbol: string;
     params: string;
   }[] = [];
 
@@ -83,16 +87,18 @@ export const initReservesByHelper = async (
 
   const reserves = Object.entries(reservesParams);
 
-  // console.log(reserves)
   for (let [symbol, params] of reserves) {
-    console.log(symbol);
     if (!tokenAddresses[symbol]) {
       console.log(`- Skipping init of ${symbol} due token address is not set at markets config`);
       continue;
     }
-    // console.log(params)
-
-    const { strategy, aTokenImpl, reserveDecimals } = params;
+    const pool = await getLendingPool(await addressProvider.getLendingPool());
+    const poolReserve = await pool.getReserveData(tokenAddresses[symbol]);
+    if (poolReserve.viTokenAddress !== ZERO_ADDRESS) {
+      console.log(`- Skipping init of ${symbol} due is already initialized`);
+      continue;
+    }
+    const { strategy, viTokenImpl, reserveDecimals } = params;
     const {
       optimalUtilizationRate,
       baseVariableBorrowRate,
@@ -117,6 +123,7 @@ export const initReservesByHelper = async (
         rateStrategies[strategy.name],
         verify
       );
+
       // This causes the last strategy to be printed twice, once under "DefaultReserveInterestRateStrategy"
       // and once under the actual `strategyASSET` key.
       rawInsertContractAddressInDb(strategy.name, strategyAddresses[strategy.name]);
@@ -124,13 +131,13 @@ export const initReservesByHelper = async (
     // Prepare input parameters
     reserveSymbols.push(symbol);
     initInputParams.push({
-      aTokenImpl: await getContractAddressWithJsonFallback(aTokenImpl, poolName),
-      stableDebtTokenImpl: await getContractAddressWithJsonFallback(
-        eContractid.StableDebtToken,
+      viTokenImpl: await getContractAddressWithJsonFallback(viTokenImpl, poolName),
+      stableVdTokenImpl: await getContractAddressWithJsonFallback(
+        eContractid.StableVdToken,
         poolName
       ),
-      variableDebtTokenImpl: await getContractAddressWithJsonFallback(
-        eContractid.VariableDebtToken,
+      variableVdTokenImpl: await getContractAddressWithJsonFallback(
+        eContractid.VariableVdToken,
         poolName
       ),
       underlyingAssetDecimals: reserveDecimals,
@@ -139,13 +146,13 @@ export const initReservesByHelper = async (
       treasury: treasuryAddress,
       incentivesController: incentivesController,
       underlyingAssetName: symbol,
-      aTokenName: `${aTokenNamePrefix} ${symbol}`,
-      aTokenSymbol: `a${symbolPrefix}${symbol}`,
-      variableDebtTokenName: `${variableDebtTokenNamePrefix} ${symbolPrefix}${symbol}`,
-      variableDebtTokenSymbol: `variableDebt${symbolPrefix}${symbol}`,
-      stableDebtTokenName: `${stableDebtTokenNamePrefix} ${symbol}`,
-      stableDebtTokenSymbol: `stableDebt${symbolPrefix}${symbol}`,
-      params: await getATokenExtraParams(aTokenImpl, tokenAddresses[symbol]),
+      viTokenName: `${viTokenNamePrefix} ${symbol}`,
+      viTokenSymbol: `vi${symbol}`,
+      variableVdTokenName: `${variableVdTokenNamePrefix} ${symbol}`,
+      variableVdTokenSymbol: `variableVd${symbol}`,
+      stableVdTokenName: `${stableVdTokenNamePrefix} ${symbol}`,
+      stableVdTokenSymbol: `stableVd${symbol}`,
+      params: await getViTokenExtraParams(viTokenImpl, tokenAddresses[symbol]),
     });
   }
 
@@ -156,13 +163,7 @@ export const initReservesByHelper = async (
   const configurator = await getLendingPoolConfiguratorProxy();
 
   console.log(`- Reserves initialization in ${chunkedInitInputParams.length} txs`);
-
-  // console.log(chunkedInitInputParams.length);
-
-  // for (let chunkIndex = 0; chunkIndex < chunkedInitInputParams.length; chunkIndex++) {
-  for (let chunkIndex = 0; chunkIndex < 4; chunkIndex++) {
-    console.log(chunkIndex);
-    console.log(chunkedInitInputParams[chunkIndex]);
+  for (let chunkIndex = 0; chunkIndex < chunkedInitInputParams.length; chunkIndex++) {
     const tx3 = await waitForTx(
       await configurator.batchInitReserve(chunkedInitInputParams[chunkIndex])
     );
@@ -201,11 +202,11 @@ export const getPairsTokenAggregator = (
 export const configureReservesByHelper = async (
   reservesParams: iMultiPoolsAssets<IReserveParams>,
   tokenAddresses: { [symbol: string]: tEthereumAddress },
-  helpers: AaveProtocolDataProvider,
+  helpers: ViniumProtocolDataProvider,
   admin: tEthereumAddress
 ) => {
   const addressProvider = await getLendingPoolAddressesProvider();
-  const atokenAndRatesDeployer = await getATokensAndRatesHelper();
+  const vitokenAndRatesDeployer = await getViTokensAndRatesHelper();
   const tokens: string[] = [];
   const symbols: string[] = [];
 
@@ -268,8 +269,8 @@ export const configureReservesByHelper = async (
     symbols.push(assetSymbol);
   }
   if (tokens.length) {
-    // Set aTokenAndRatesDeployer as temporal admin
-    await waitForTx(await addressProvider.setPoolAdmin(atokenAndRatesDeployer.address));
+    // Set viTokenAndRatesDeployer as temporal admin
+    await waitForTx(await addressProvider.setPoolAdmin(vitokenAndRatesDeployer.address));
 
     // Deploy init per chunks
     const enableChunks = 20;
@@ -279,7 +280,7 @@ export const configureReservesByHelper = async (
     console.log(`- Configure reserves in ${chunkedInputParams.length} txs`);
     for (let chunkIndex = 0; chunkIndex < chunkedInputParams.length; chunkIndex++) {
       await waitForTx(
-        await atokenAndRatesDeployer.configureReserves(chunkedInputParams[chunkIndex])
+        await vitokenAndRatesDeployer.configureReserves(chunkedInputParams[chunkIndex])
       );
       console.log(`  - Init for: ${chunkedSymbols[chunkIndex].join(', ')}`);
     }
@@ -296,7 +297,7 @@ const getAddressById = async (
 
 // Function deprecated
 const isErc20SymbolCorrect = async (token: tEthereumAddress, symbol: string) => {
-  const erc20 = await getAToken(token); // using aToken for ERC20 interface
+  const erc20 = await getViToken(token); // using viToken for ERC20 interface
   const erc20Symbol = await erc20.symbol();
   return symbol === erc20Symbol;
 };

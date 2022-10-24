@@ -9,7 +9,7 @@ variables:
 lint:
   stage: checks
   tags:
-    - aave-build-runner
+    - vinium-build-runner
   before_script:
     - docker-compose -p ${CI_JOB_ID} -f docker-compose.test.yml build
   script:
@@ -21,7 +21,7 @@ lint:
 test:
   stage: checks
   tags:
-    - aave-build-runner
+    - vinium-build-runner
   before_script:
     - docker-compose -p ${CI_JOB_ID} -f docker-compose.test.yml build
   script:
@@ -34,12 +34,12 @@ test:
     - merge_requests
 deploy-mainnet-fork:
   tags:
-    - aave-build-runner
+    - vinium-build-runner
   stage: checks
   before_script:
     - docker-compose -p ${CI_JOB_ID} -f docker-compose.test.yml build
   script:
-    - docker-compose -p ${CI_JOB_ID} -f docker-compose.test.yml run contracts-env npm run aave:fork:main
+    - docker-compose -p ${CI_JOB_ID} -f docker-compose.test.yml run contracts-env npm run vinium:fork:main
   after_script:
     - docker-compose -p ${CI_JOB_ID} -f docker-compose.test.yml run contracts-env npm run ci:clean
     - docker-compose -p ${CI_JOB_ID} -f docker-compose.test.yml down
@@ -59,9 +59,9 @@ certora-test:
     - mv solc-static-linux /usr/bin/solc
     - export PATH=$PATH:/usr/bin/solc/solc-static-linux
   script:
-    - certoraRun specs/harness/StableDebtTokenHarness.sol:StableDebtTokenHarness --solc_args "['--optimize']" --verify StableDebtTokenHarness:specs/StableDebtToken.spec --settings -assumeUnwindCond,-b=4 --cache StableDebtToken --cloud
+    - certoraRun specs/harness/StableVdTokenHarness.sol:StableVdTokenHarness --solc_args "['--optimize']" --verify StableVdTokenHarness:specs/StableVdToken.spec --settings -assumeUnwindCond,-b=4 --cache StableVdToken --cloud
     - certoraRun specs/harness/UserConfigurationHarness.sol --verify UserConfigurationHarness:specs/UserConfiguration.spec --solc_args "['--optimize']" --settings -useBitVectorTheory --cache UserConfiguration --cloud
-    - certoraRun contracts/protocol/tokenization/VariableDebtToken.sol:VariableDebtToken specs/harness/LendingPoolHarnessForVariableDebtToken.sol --solc_args "['--optimize']" --link VariableDebtToken:POOL=LendingPoolHarnessForVariableDebtToken --verify VariableDebtToken:specs/VariableDebtToken.spec --settings -assumeUnwindCond,-useNonLinearArithmetic,-b=4 --cache VariableDebtToken --cloud
+    - certoraRun contracts/protocol/tokenization/VariableVdToken.sol:VariableVdToken specs/harness/LendingPoolHarnessForVariableVdToken.sol --solc_args "['--optimize']" --link VariableVdToken:POOL=LendingPoolHarnessForVariableVdToken --verify VariableVdToken:specs/VariableVdToken.spec --settings -assumeUnwindCond,-useNonLinearArithmetic,-b=4 --cache VariableVdToken --cloud
   only:
     - master
     - merge_requests

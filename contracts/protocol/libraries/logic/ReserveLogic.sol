@@ -4,9 +4,9 @@ pragma solidity 0.6.12;
 import {SafeMath} from '../../../dependencies/openzeppelin/contracts/SafeMath.sol';
 import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {SafeERC20} from '../../../dependencies/openzeppelin/contracts/SafeERC20.sol';
-import {IAToken} from '../../../interfaces/IAToken.sol';
-import {IStableDebtToken} from '../../../interfaces/IStableDebtToken.sol';
-import {IVariableDebtToken} from '../../../interfaces/IVariableDebtToken.sol';
+import {IViToken} from '../../../interfaces/IViToken.sol';
+import {IStableVdToken} from '../../../interfaces/IStableVdToken.sol';
+import {IVariableVdToken} from '../../../interfaces/IVariableVdToken.sol';
 import {IReserveInterestRateStrategy} from '../../../interfaces/IReserveInterestRateStrategy.sol';
 import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
 import {MathUtils} from '../math/MathUtils.sol';
@@ -17,7 +17,7 @@ import {DataTypes} from '../types/DataTypes.sol';
 
 /**
  * @title ReserveLogic library
- * @author Vini
+ * @author Vinium
  * @notice Implements the logic to update the reserves state
  */
 library ReserveLogic {
@@ -106,7 +106,7 @@ library ReserveLogic {
    * @param reserve the reserve object
    **/
   function updateState(DataTypes.ReserveData storage reserve) internal {
-    uint256 scaledVariableDebt = IVariableDebtToken(reserve.variableDebtTokenAddress)
+    uint256 scaledVariableDebt = IVariableVdToken(reserve.variableVdTokenAddress)
       .scaledTotalSupply();
     uint256 previousVariableBorrowIndex = reserve.variableBorrowIndex;
     uint256 previousLiquidityIndex = reserve.liquidityIndex;
@@ -155,28 +155,28 @@ library ReserveLogic {
   /**
    * @dev Initializes a reserve
    * @param reserve The reserve object
-   * @param aTokenAddress The address of the overlying atoken contract
+   * @param viTokenAddress The address of the overlying vitoken contract
    * @param interestRateStrategyAddress The address of the interest rate strategy contract
    **/
   function init(
     DataTypes.ReserveData storage reserve,
-    address aTokenAddress,
-    address stableDebtTokenAddress,
-    address variableDebtTokenAddress,
+    address viTokenAddress,
+    address stableVdTokenAddress,
+    address variableVdTokenAddress,
     address interestRateStrategyAddress
   ) external {
-    require(reserve.aTokenAddress == address(0), Errors.RL_RESERVE_ALREADY_INITIALIZED);
+    require(reserve.viTokenAddress == address(0), Errors.RL_RESERVE_ALREADY_INITIALIZED);
 
     reserve.liquidityIndex = uint128(WadRayMath.ray());
     reserve.variableBorrowIndex = uint128(WadRayMath.ray());
-    reserve.aTokenAddress = aTokenAddress;
-    reserve.stableDebtTokenAddress = stableDebtTokenAddress;
-    reserve.variableDebtTokenAddress = variableDebtTokenAddress;
+    reserve.viTokenAddress = viTokenAddress;
+    reserve.stableVdTokenAddress = stableVdTokenAddress;
+    reserve.variableVdTokenAddress = variableVdTokenAddress;
     reserve.interestRateStrategyAddress = interestRateStrategyAddress;
   }
 
   struct UpdateInterestRatesLocalVars {
-    address stableDebtTokenAddress;
+    address stableVdTokenAddress;
     uint256 availableLiquidity;
     uint256 totalStableDebt;
     uint256 newLiquidityRate;
@@ -195,21 +195,21 @@ library ReserveLogic {
   function updateInterestRates(
     DataTypes.ReserveData storage reserve,
     address reserveAddress,
-    address aTokenAddress,
+    address viTokenAddress,
     uint256 liquidityAdded,
     uint256 liquidityTaken
   ) internal {
     UpdateInterestRatesLocalVars memory vars;
 
-    vars.stableDebtTokenAddress = reserve.stableDebtTokenAddress;
+    vars.stableVdTokenAddress = reserve.stableVdTokenAddress;
 
-    (vars.totalStableDebt, vars.avgStableRate) = IStableDebtToken(vars.stableDebtTokenAddress)
+    (vars.totalStableDebt, vars.avgStableRate) = IStableVdToken(vars.stableVdTokenAddress)
       .getTotalSupplyAndAvgRate();
 
     //calculates the total variable debt locally using the scaled total supply instead
     //of totalSupply(), as it's noticeably cheaper. Also, the index has been
     //updated by the previous updateState() call
-    vars.totalVariableDebt = IVariableDebtToken(reserve.variableDebtTokenAddress)
+    vars.totalVariableDebt = IVariableVdToken(reserve.variableVdTokenAddress)
       .scaledTotalSupply()
       .rayMul(reserve.variableBorrowIndex);
 
@@ -219,7 +219,7 @@ library ReserveLogic {
       vars.newVariableRate
     ) = IReserveInterestRateStrategy(reserve.interestRateStrategyAddress).calculateInterestRates(
       reserveAddress,
-      aTokenAddress,
+      viTokenAddress,
       liquidityAdded,
       liquidityTaken,
       vars.totalStableDebt,
@@ -290,7 +290,7 @@ library ReserveLogic {
       vars.currentStableDebt,
       vars.avgStableRate,
       vars.stableSupplyUpdatedTimestamp
-    ) = IStableDebtToken(reserve.stableDebtTokenAddress).getSupplyData();
+    ) = IStableVdToken(reserve.stableVdTokenAddress).getSupplyData();
 
     //calculate the last principal variable debt
     vars.previousVariableDebt = scaledVariableDebt.rayMul(previousVariableBorrowIndex);
@@ -317,7 +317,7 @@ library ReserveLogic {
     vars.amountToMint = vars.totalDebtAccrued.percentMul(vars.reserveFactor);
 
     if (vars.amountToMint != 0) {
-      IAToken(reserve.aTokenAddress).mintToTreasury(vars.amountToMint, newLiquidityIndex);
+      IViToken(reserve.viTokenAddress).mintToTreasury(vars.amountToMint, newLiquidityIndex);
     }
   }
 

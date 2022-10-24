@@ -14,6 +14,7 @@ export enum eEthereumNetwork {
   coverage = 'coverage',
   hardhat = 'hardhat',
   tenderly = 'tenderly',
+  goerli = 'goerli',
 }
 
 export enum ePolygonNetwork {
@@ -41,10 +42,8 @@ export enum EthereumNetworkNames {
   fuji = 'fuji',
 }
 
-export enum AavePools {
+export enum ViniumPools {
   proto = 'proto',
-  matic = 'matic',
-  amm = 'amm',
   avalanche = 'avalanche',
 }
 
@@ -64,25 +63,25 @@ export enum eContractid {
   Proxy = 'Proxy',
   MockAggregator = 'MockAggregator',
   LendingRateOracle = 'LendingRateOracle',
-  AaveOracle = 'AaveOracle',
+  ViniumOracle = 'ViniumOracle',
   DefaultReserveInterestRateStrategy = 'DefaultReserveInterestRateStrategy',
   LendingPoolCollateralManager = 'LendingPoolCollateralManager',
   InitializableAdminUpgradeabilityProxy = 'InitializableAdminUpgradeabilityProxy',
   MockFlashLoanReceiver = 'MockFlashLoanReceiver',
   WalletBalanceProvider = 'WalletBalanceProvider',
-  AToken = 'AToken',
-  MockAToken = 'MockAToken',
-  DelegationAwareAToken = 'DelegationAwareAToken',
-  MockStableDebtToken = 'MockStableDebtToken',
-  MockVariableDebtToken = 'MockVariableDebtToken',
-  AaveProtocolDataProvider = 'AaveProtocolDataProvider',
+  ViToken = 'ViToken',
+  MockViToken = 'MockViToken',
+  DelegationAwareViToken = 'DelegationAwareViToken',
+  MockStableVdToken = 'MockStableVdToken',
+  MockVariableVdToken = 'MockVariableVdToken',
+  ViniumProtocolDataProvider = 'ViniumProtocolDataProvider',
   IERC20Detailed = 'IERC20Detailed',
-  StableDebtToken = 'StableDebtToken',
-  VariableDebtToken = 'VariableDebtToken',
+  StableVdToken = 'StableVdToken',
+  VariableVdToken = 'VariableVdToken',
   FeeProvider = 'FeeProvider',
   TokenDistributor = 'TokenDistributor',
   StableAndVariableTokensHelper = 'StableAndVariableTokensHelper',
-  ATokensAndRatesHelper = 'ATokensAndRatesHelper',
+  ViTokensAndRatesHelper = 'ViTokensAndRatesHelper',
   UiPoolDataProvider = 'UiPoolDataProvider',
   UiPoolDataProviderV2 = 'UiPoolDataProviderV2',
   UiPoolDataProviderV2V3 = 'UiPoolDataProviderV2V3',
@@ -108,7 +107,7 @@ export enum eContractid {
  * Error messages prefix glossary:
  *  - VL = ValidationLogic
  *  - MATH = Math libraries
- *  - AT = aToken or DebtTokens
+ *  - AT = viToken or VdTokens
  *  - LP = LendingPool
  *  - LPAPR = LendingPoolAddressesProviderRegistry
  *  - LPC = LendingPoolConfiguration
@@ -154,7 +153,7 @@ export enum ProtocolErrors {
   CT_TRANSFER_AMOUNT_NOT_GT_0 = '31', // 'Transferred amount needs to be greater than zero'
   RL_RESERVE_ALREADY_INITIALIZED = '32', // 'Reserve has already been initialized'
   LPC_RESERVE_LIQUIDITY_NOT_0 = '34', // 'The liquidity of the reserve needs to be 0'
-  LPC_INVALID_ATOKEN_POOL_ADDRESS = '35', // 'The liquidity of the reserve needs to be 0'
+  LPC_INVALID_VITOKEN_POOL_ADDRESS = '35', // 'The liquidity of the reserve needs to be 0'
   LPC_INVALID_STABLE_DEBT_TOKEN_POOL_ADDRESS = '36', // 'The liquidity of the reserve needs to be 0'
   LPC_INVALID_VARIABLE_DEBT_TOKEN_POOL_ADDRESS = '37', // 'The liquidity of the reserve needs to be 0'
   LPC_INVALID_STABLE_DEBT_TOKEN_UNDERLYING_ADDRESS = '38', // 'The liquidity of the reserve needs to be 0'
@@ -183,7 +182,7 @@ export enum ProtocolErrors {
   LP_FAILED_COLLATERAL_SWAP = '60',
   LP_INVALID_EQUAL_ASSETS_TO_SWAP = '61',
   LP_REENTRANCY_NOT_ALLOWED = '62',
-  LP_CALLER_MUST_BE_AN_ATOKEN = '63',
+  LP_CALLER_MUST_BE_AN_VITOKEN = '63',
   LP_IS_PAUSED = '64', // 'Pool is paused'
   LP_NO_MORE_RESERVES_ALLOWED = '65',
   LP_INVALID_FLASH_LOAN_EXECUTOR_RETURN = '66',
@@ -220,7 +219,7 @@ export interface iAssetBase<T> {
   USDC: T;
   USDT: T;
   SUSD: T;
-  AAVE: T;
+  VINIUM: T;
   BAT: T;
   MKR: T;
   LINK: T;
@@ -237,7 +236,7 @@ export interface iAssetBase<T> {
   ENJ: T;
   UniDAIWETH: T;
   UniWBTCWETH: T;
-  UniAAVEWETH: T;
+  UniVINIUMWETH: T;
   UniBATWETH: T;
   UniDAIUSDC: T;
   UniCRVWETH: T;
@@ -255,24 +254,23 @@ export interface iAssetBase<T> {
   STAKE: T;
   xSUSHI: T;
   WAVAX: T;
-  WINE: T;
-  MIM: T;
-  MGRAPE: T;
-  MGRAPEMIN: T;
+  SAVAX: T;
+  BTCB: T;
+  GRAPE: T;
 }
 
 export type iAssetsWithoutETH<T> = Omit<iAssetBase<T>, 'ETH'>;
 
 export type iAssetsWithoutUSD<T> = Omit<iAssetBase<T>, 'USD'>;
 
-export type iAavePoolAssets<T> = Pick<
+export type iViniumPoolAssets<T> = Pick<
   iAssetsWithoutUSD<T>,
   | 'DAI'
   | 'TUSD'
   | 'USDC'
   | 'USDT'
   | 'SUSD'
-  | 'AAVE'
+  | 'VINIUM'
   | 'BAT'
   | 'MKR'
   | 'LINK'
@@ -299,7 +297,7 @@ export type iLpPoolAssets<T> = Pick<
   | 'WETH'
   | 'UniDAIWETH'
   | 'UniWBTCWETH'
-  | 'UniAAVEWETH'
+  | 'UniVINIUMWETH'
   | 'UniBATWETH'
   | 'UniDAIUSDC'
   | 'UniCRVWETH'
@@ -317,7 +315,7 @@ export type iLpPoolAssets<T> = Pick<
 
 export type iMaticPoolAssets<T> = Pick<
   iAssetsWithoutUSD<T>,
-  'DAI' | 'USDC' | 'USDT' | 'WBTC' | 'WETH' | 'WMATIC' | 'AAVE'
+  'DAI' | 'USDC' | 'USDT' | 'WBTC' | 'WETH' | 'WMATIC' | 'VINIUM'
 >;
 
 export type iXDAIPoolAssets<T> = Pick<
@@ -327,20 +325,18 @@ export type iXDAIPoolAssets<T> = Pick<
 
 export type iAvalanchePoolAssets<T> = Pick<
   iAssetsWithoutUSD<T>,
-  // 'WETH'| 'USDT'
-  // 'WETH' | 'DAI' | 'USDT' | 'MIM' | 'WBTC' | 'WAVAX' | 'USDC' | 'WINE' | 'MGRAPE' | 'MGRAPEMIN'
-  'WETH' | 'USDT' | 'WBTC' | 'WAVAX'
+  'WETH' | 'DAI' | 'USDT' | 'BTCB' | 'USDC' | 'SAVAX' | 'GRAPE'
 >;
 
-export type iMultiPoolsAssets<T> = iAssetCommon<T> | iAavePoolAssets<T>;
+export type iMultiPoolsAssets<T> = iAssetCommon<T> | iViniumPoolAssets<T>;
 
-export type iAavePoolTokens<T> = Omit<iAavePoolAssets<T>, 'ETH'>;
+export type iViniumPoolTokens<T> = Omit<iViniumPoolAssets<T>, 'ETH'>;
 
 export type iAssetAggregatorBase<T> = iAssetsWithoutETH<T>;
 
 export enum TokenContractId {
   DAI = 'DAI',
-  AAVE = 'AAVE',
+  VINIUM = 'VINIUM',
   TUSD = 'TUSD',
   BAT = 'BAT',
   WETH = 'WETH',
@@ -360,9 +356,12 @@ export enum TokenContractId {
   YFI = 'YFI',
   UNI = 'UNI',
   ENJ = 'ENJ',
+  SAVAX = 'SAVAX',
+  GRAPE = 'GRAPE',
+  'BTCB' = 'BTCB',
   UniDAIWETH = 'UniDAIWETH',
   UniWBTCWETH = 'UniWBTCWETH',
-  UniAAVEWETH = 'UniAAVEWETH',
+  UniVINIUMWETH = 'UniVINIUMWETH',
   UniBATWETH = 'UniBATWETH',
   UniDAIUSDC = 'UniDAIUSDC',
   UniCRVWETH = 'UniCRVWETH',
@@ -383,7 +382,7 @@ export enum TokenContractId {
 }
 
 export interface IReserveParams extends IReserveBorrowParams, IReserveCollateralParams {
-  aTokenImpl: eContractid;
+  viTokenImpl: eContractid;
   reserveFactor: string;
   strategy: IInterestRateStrategyParams;
 }
@@ -438,6 +437,7 @@ export interface iEthereumParamsPerNetwork<T> {
   [eEthereumNetwork.main]: T;
   [eEthereumNetwork.hardhat]: T;
   [eEthereumNetwork.tenderly]: T;
+  [eEthereumNetwork.goerli]: T;
 }
 
 export interface iPolygonParamsPerNetwork<T> {
@@ -455,10 +455,8 @@ export interface iAvalancheParamsPerNetwork<T> {
 }
 
 export interface iParamsPerPool<T> {
-  [AavePools.proto]: T;
-  [AavePools.matic]: T;
-  [AavePools.amm]: T;
-  [AavePools.avalanche]: T;
+  [ViniumPools.proto]: T;
+  [ViniumPools.avalanche]: T;
 }
 
 export interface iBasicDistributionParams {
@@ -482,11 +480,11 @@ export interface IProtocolGlobalConfig {
   UsdAddress: tEthereumAddress;
   NilAddress: tEthereumAddress;
   OneAddress: tEthereumAddress;
-  AaveReferral: string;
+  ViniumReferral: string;
 }
 
 export interface IMocksConfig {
-  AllAssetsInitialPrices: iAssetBase<string>;
+  AllAssetsInitialPrices: { [key: string]: string };
 }
 
 export interface ILendingRateOracleRatesCommon {
@@ -499,9 +497,9 @@ export interface ILendingRate {
 
 export interface IBaseConfiguration {
   MarketId: string;
-  ATokenNamePrefix: string;
-  StableDebtTokenNamePrefix: string;
-  VariableDebtTokenNamePrefix: string;
+  ViTokenNamePrefix: string;
+  StableVdTokenNamePrefix: string;
+  VariableVdTokenNamePrefix: string;
   SymbolPrefix: string;
   ProviderId: number;
   ProtocolGlobalParams: IProtocolGlobalConfig;
@@ -513,21 +511,21 @@ export interface IBaseConfiguration {
   LendingRateOracleRatesCommon: iMultiPoolsAssets<IMarketRates>;
   LendingRateOracle: iParamsPerNetwork<tEthereumAddress>;
   TokenDistributor: iParamsPerNetwork<tEthereumAddress>;
-  AaveOracle: iParamsPerNetwork<tEthereumAddress>;
+  ViniumOracle: iParamsPerNetwork<tEthereumAddress>;
   FallbackOracle: iParamsPerNetwork<tEthereumAddress>;
   ChainlinkAggregator: iParamsPerNetwork<ITokenAddress>;
   PoolAdmin: iParamsPerNetwork<tEthereumAddress | undefined>;
   PoolAdminIndex: number;
   EmergencyAdmin: iParamsPerNetwork<tEthereumAddress | undefined>;
   EmergencyAdminIndex: number;
-  ATokenDomainSeparator: iParamsPerNetwork<string>;
+  ViTokenDomainSeparator: iParamsPerNetwork<string>;
   WETH: iParamsPerNetwork<tEthereumAddress>;
   WrappedNativeToken: iParamsPerNetwork<tEthereumAddress>;
   WethGateway: iParamsPerNetwork<tEthereumAddress>;
   ReserveFactorTreasuryAddress: iParamsPerNetwork<tEthereumAddress>;
   IncentivesController: iParamsPerNetwork<tEthereumAddress>;
-  StableDebtTokenImplementation?: iParamsPerNetwork<tEthereumAddress>;
-  VariableDebtTokenImplementation?: iParamsPerNetwork<tEthereumAddress>;
+  StableVdTokenImplementation?: iParamsPerNetwork<tEthereumAddress>;
+  VariableVdTokenImplementation?: iParamsPerNetwork<tEthereumAddress>;
   ReserveAssets: iParamsPerNetwork<SymbolMap<tEthereumAddress>>;
   OracleQuoteCurrency: string;
   OracleQuoteUnit: string;
@@ -538,8 +536,8 @@ export interface ICommonConfiguration extends IBaseConfiguration {
   Mocks: IMocksConfig;
 }
 
-export interface IAaveConfiguration extends ICommonConfiguration {
-  ReservesConfig: iAavePoolAssets<IReserveParams>;
+export interface IViniumConfiguration extends ICommonConfiguration {
+  ReservesConfig: iViniumPoolAssets<IReserveParams>;
 }
 
 export interface IAmmConfiguration extends ICommonConfiguration {
@@ -562,4 +560,4 @@ export interface ITokenAddress {
   [token: string]: tEthereumAddress;
 }
 
-export type PoolConfiguration = ICommonConfiguration | IAaveConfiguration;
+export type PoolConfiguration = ICommonConfiguration | IViniumConfiguration;

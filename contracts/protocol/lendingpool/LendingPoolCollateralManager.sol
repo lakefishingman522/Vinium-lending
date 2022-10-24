@@ -3,12 +3,12 @@ pragma solidity 0.6.12;
 
 import {SafeMath} from '../../dependencies/openzeppelin/contracts//SafeMath.sol';
 import {IERC20} from '../../dependencies/openzeppelin/contracts//IERC20.sol';
-import {IAToken} from '../../interfaces/IAToken.sol';
-import {IStableDebtToken} from '../../interfaces/IStableDebtToken.sol';
-import {IVariableDebtToken} from '../../interfaces/IVariableDebtToken.sol';
+import {IViToken} from '../../interfaces/IViToken.sol';
+import {IStableVdToken} from '../../interfaces/IStableVdToken.sol';
+import {IVariableVdToken} from '../../interfaces/IVariableVdToken.sol';
 import {IPriceOracleGetter} from '../../interfaces/IPriceOracleGetter.sol';
 import {ILendingPoolCollateralManager} from '../../interfaces/ILendingPoolCollateralManager.sol';
-import {VersionedInitializable} from '../libraries/vini-upgradeability/VersionedInitializable.sol';
+import {VersionedInitializable} from '../libraries/vinium-upgradeability/VersionedInitializable.sol';
 import {GenericLogic} from '../libraries/logic/GenericLogic.sol';
 import {Helpers} from '../libraries/helpers/Helpers.sol';
 import {WadRayMath} from '../libraries/math/WadRayMath.sol';
@@ -21,7 +21,7 @@ import {LendingPoolStorage} from './LendingPoolStorage.sol';
 
 /**
  * @title LendingPoolCollateralManager contract
- * @author Vini
+ * @author Vinium
  * @dev Implements actions involving management of collateral in the protocol, the main one being the liquidations
  * IMPORTANT This contract will run always via DELEGATECALL, through the LendingPool, so the chain of inheritance
  * is the same as the LendingPool, to have compatible storage layouts
@@ -50,8 +50,8 @@ contract LendingPoolCollateralManager is
     uint256 maxCollateralToLiquidate;
     uint256 debtAmountNeeded;
     uint256 healthFactor;
-    uint256 liquidatorPreviousATokenBalance;
-    IAToken collateralAtoken;
+    uint256 liquidatorPreviousViTokenBalance;
+    IViToken collateralVitoken;
     bool isCollateralEnabled;
     DataTypes.InterestRateMode borrowRateMode;
     uint256 errorCode;
@@ -75,7 +75,7 @@ contract LendingPoolCollateralManager is
    * @param debtAsset The address of the underlying borrowed asset to be repaid with the liquidation
    * @param user The address of the borrower getting liquidated
    * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover
-   * @param receiveAToken `true` if the liquidators wants to receive the collateral aTokens, `false` if he wants
+   * @param receiveViToken `true` if the liquidators wants to receive the collateral viTokens, `false` if he wants
    * to receive the underlying collateral asset directly
    **/
   function liquidationCall(
@@ -83,7 +83,7 @@ contract LendingPoolCollateralManager is
     address debtAsset,
     address user,
     uint256 debtToCover,
-    bool receiveAToken
+    bool receiveViToken
   ) external override returns (uint256, string memory) {
     DataTypes.ReserveData storage collateralReserve = _reserves[collateralAsset];
     DataTypes.ReserveData storage debtReserve = _reserves[debtAsset];
@@ -115,9 +115,9 @@ contract LendingPoolCollateralManager is
       return (vars.errorCode, vars.errorMsg);
     }
 
-    vars.collateralAtoken = IAToken(collateralReserve.aTokenAddress);
+    vars.collateralVitoken = IViToken(collateralReserve.viTokenAddress);
 
-    vars.userCollateralBalance = vars.collateralAtoken.balanceOf(user);
+    vars.userCollateralBalance = vars.collateralVitoken.balanceOf(user);
 
     vars.maxLiquidatableDebt = vars.userStableDebt.add(vars.userVariableDebt).percentMul(
       LIQUIDATION_CLOSE_FACTOR_PERCENT
@@ -149,9 +149,9 @@ contract LendingPoolCollateralManager is
 
     // If the liquidator reclaims the underlying asset, we make sure there is enough available liquidity in the
     // collateral reserve
-    if (!receiveAToken) {
+    if (!receiveViToken) {
       uint256 currentAvailableCollateral = IERC20(collateralAsset).balanceOf(
-        address(vars.collateralAtoken)
+        address(vars.collateralVitoken)
       );
       if (currentAvailableCollateral < vars.maxCollateralToLiquidate) {
         return (
@@ -164,7 +164,7 @@ contract LendingPoolCollateralManager is
     debtReserve.updateState();
 
     if (vars.userVariableDebt >= vars.actualDebtToLiquidate) {
-      IVariableDebtToken(debtReserve.variableDebtTokenAddress).burn(
+      IVariableVdToken(debtReserve.variableVdTokenAddress).burn(
         user,
         vars.actualDebtToLiquidate,
         debtReserve.variableBorrowIndex
@@ -172,13 +172,13 @@ contract LendingPoolCollateralManager is
     } else {
       // If the user doesn't have variable debt, no need to try to burn variable debt tokens
       if (vars.userVariableDebt > 0) {
-        IVariableDebtToken(debtReserve.variableDebtTokenAddress).burn(
+        IVariableVdToken(debtReserve.variableVdTokenAddress).burn(
           user,
           vars.userVariableDebt,
           debtReserve.variableBorrowIndex
         );
       }
-      IStableDebtToken(debtReserve.stableDebtTokenAddress).burn(
+      IStableVdToken(debtReserve.stableVdTokenAddress).burn(
         user,
         vars.actualDebtToLiquidate.sub(vars.userVariableDebt)
       );
@@ -186,16 +186,16 @@ contract LendingPoolCollateralManager is
 
     debtReserve.updateInterestRates(
       debtAsset,
-      debtReserve.aTokenAddress,
+      debtReserve.viTokenAddress,
       vars.actualDebtToLiquidate,
       0
     );
 
-    if (receiveAToken) {
-      vars.liquidatorPreviousATokenBalance = IERC20(vars.collateralAtoken).balanceOf(msg.sender);
-      vars.collateralAtoken.transferOnLiquidation(user, msg.sender, vars.maxCollateralToLiquidate);
+    if (receiveViToken) {
+      vars.liquidatorPreviousViTokenBalance = IERC20(vars.collateralVitoken).balanceOf(msg.sender);
+      vars.collateralVitoken.transferOnLiquidation(user, msg.sender, vars.maxCollateralToLiquidate);
 
-      if (vars.liquidatorPreviousATokenBalance == 0) {
+      if (vars.liquidatorPreviousViTokenBalance == 0) {
         DataTypes.UserConfigurationMap storage liquidatorConfig = _usersConfig[msg.sender];
         liquidatorConfig.setUsingAsCollateral(collateralReserve.id, true);
         emit ReserveUsedAsCollateralEnabled(collateralAsset, msg.sender);
@@ -204,13 +204,13 @@ contract LendingPoolCollateralManager is
       collateralReserve.updateState();
       collateralReserve.updateInterestRates(
         collateralAsset,
-        address(vars.collateralAtoken),
+        address(vars.collateralVitoken),
         0,
         vars.maxCollateralToLiquidate
       );
 
-      // Burn the equivalent amount of aToken, sending the underlying to the liquidator
-      vars.collateralAtoken.burn(
+      // Burn the equivalent amount of viToken, sending the underlying to the liquidator
+      vars.collateralVitoken.burn(
         user,
         msg.sender,
         vars.maxCollateralToLiquidate,
@@ -225,10 +225,10 @@ contract LendingPoolCollateralManager is
       emit ReserveUsedAsCollateralDisabled(collateralAsset, user);
     }
 
-    // Transfers the debt asset being repaid to the aToken, where the liquidity is kept
+    // Transfers the debt asset being repaid to the viToken, where the liquidity is kept
     IERC20(debtAsset).safeTransferFrom(
       msg.sender,
-      debtReserve.aTokenAddress,
+      debtReserve.viTokenAddress,
       vars.actualDebtToLiquidate
     );
 
@@ -239,7 +239,7 @@ contract LendingPoolCollateralManager is
       vars.actualDebtToLiquidate,
       vars.maxCollateralToLiquidate,
       msg.sender,
-      receiveAToken
+      receiveViToken
     );
 
     return (uint256(Errors.CollateralManagerErrors.NO_ERROR), Errors.LPCM_NO_ERRORS);

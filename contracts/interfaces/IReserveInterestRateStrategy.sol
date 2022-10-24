@@ -4,7 +4,7 @@ pragma solidity 0.6.12;
 /**
  * @title IReserveInterestRateStrategyInterface interface
  * @dev Interface for the calculation of the interest rates
- * @author Vini
+ * @author Vinium
  */
 interface IReserveInterestRateStrategy {
   function baseVariableBorrowRate() external view returns (uint256);
@@ -29,7 +29,7 @@ interface IReserveInterestRateStrategy {
 
   function calculateInterestRates(
     address reserve,
-    address aToken,
+    address viToken,
     uint256 liquidityAdded,
     uint256 liquidityTaken,
     uint256 totalStableDebt,

@@ -1,7 +1,7 @@
 import { task } from 'hardhat/config';
 import {
-  deployATokenImplementations,
-  deployATokensAndRatesHelper,
+  deployViTokenImplementations,
+  deployViTokensAndRatesHelper,
   deployLendingPool,
   deployLendingPoolConfigurator,
   deployStableAndVariableTokensHelper,
@@ -51,9 +51,9 @@ task('dev:deploy-lending-pool', 'Deploy lending pool for dev enviroment')
       [lendingPoolProxy.address, addressesProvider.address],
       verify
     );
-    await deployATokensAndRatesHelper(
+    await deployViTokensAndRatesHelper(
       [lendingPoolProxy.address, addressesProvider.address, lendingPoolConfiguratorProxy.address],
       verify
     );
-    await deployATokenImplementations(pool, poolConfig.ReservesConfig, verify);
+    await deployViTokenImplementations(pool, poolConfig.ReservesConfig, verify);
   });

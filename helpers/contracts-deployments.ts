@@ -4,7 +4,7 @@ import {
   tEthereumAddress,
   eContractid,
   tStringTokenSmallUnits,
-  AavePools,
+  ViniumPools,
   TokenContractId,
   iMultiPoolsAssets,
   IReserveParams,
@@ -16,12 +16,12 @@ import { MockContract } from 'ethereum-waffle';
 import { ConfigNames, getReservesConfigByPool, loadPoolConfig } from './configuration';
 import { getFirstSigner } from './contracts-getters';
 import {
-  AaveProtocolDataProviderFactory,
-  ATokenFactory,
-  ATokensAndRatesHelperFactory,
-  AaveOracleFactory,
+  ViniumProtocolDataProviderFactory,
+  ViTokenFactory,
+  ViTokensAndRatesHelperFactory,
+  ViniumOracleFactory,
   DefaultReserveInterestRateStrategyFactory,
-  DelegationAwareATokenFactory,
+  DelegationAwareViTokenFactory,
   InitializableAdminUpgradeabilityProxyFactory,
   LendingPoolAddressesProviderFactory,
   LendingPoolAddressesProviderRegistryFactory,
@@ -32,21 +32,21 @@ import {
   MintableDelegationERC20Factory,
   MintableERC20Factory,
   MockAggregatorFactory,
-  MockATokenFactory,
+  MockViTokenFactory,
   MockFlashLoanReceiverFactory,
   MockParaSwapAugustusFactory,
   MockParaSwapAugustusRegistryFactory,
-  MockStableDebtTokenFactory,
-  MockVariableDebtTokenFactory,
+  MockStableVdTokenFactory,
+  MockVariableVdTokenFactory,
   MockUniswapV2Router02Factory,
   ParaSwapLiquiditySwapAdapterFactory,
   PriceOracleFactory,
   ReserveLogicFactory,
   SelfdestructTransferFactory,
-  StableDebtTokenFactory,
+  StableVdTokenFactory,
   UniswapLiquiditySwapAdapterFactory,
   UniswapRepayAdapterFactory,
-  VariableDebtTokenFactory,
+  VariableVdTokenFactory,
   WalletBalanceProviderFactory,
   WETH9MockedFactory,
   WETHGatewayFactory,
@@ -121,11 +121,11 @@ export const deployUiPoolDataProviderV2V3 = async (
   );
 
 export const deployUiPoolDataProvider = async (
-  [incentivesController, aaveOracle]: [tEthereumAddress, tEthereumAddress],
+  [incentivesController, viniumOracle]: [tEthereumAddress, tEthereumAddress],
   verify?: boolean
 ) => {
   const id = eContractid.UiPoolDataProvider;
-  const args: string[] = [incentivesController, aaveOracle];
+  const args: string[] = [incentivesController, viniumOracle];
   const instance = await deployContract<UiPoolDataProvider>(id, args);
   if (verify) {
     await verifyContract(id, instance, args);
@@ -222,7 +222,7 @@ export const deployValidationLogic = async (
   return withSaveAndVerify(validationLogic, eContractid.ValidationLogic, [], verify);
 };
 
-export const deployAaveLibraries = async (
+export const deployViniumLibraries = async (
   verify?: boolean
 ): Promise<LendingPoolLibraryAddresses> => {
   const reserveLogic = await deployReserveLogicLibrary(verify);
@@ -247,7 +247,7 @@ export const deployAaveLibraries = async (
 };
 
 export const deployLendingPool = async (verify?: boolean) => {
-  const libraries = await deployAaveLibraries(verify);
+  const libraries = await deployViniumLibraries(verify);
   const lendingPoolImpl = await new LendingPoolFactory(libraries, await getFirstSigner()).deploy();
   await insertContractAddressInDb(eContractid.LendingPoolImpl, lendingPoolImpl.address);
   return withSaveAndVerify(lendingPoolImpl, eContractid.LendingPool, [], verify);
@@ -277,13 +277,13 @@ export const deployMockAggregator = async (price: tStringTokenSmallUnits, verify
     verify
   );
 
-export const deployAaveOracle = async (
+export const deployViniumOracle = async (
   args: [tEthereumAddress[], tEthereumAddress[], tEthereumAddress, tEthereumAddress, string],
   verify?: boolean
 ) =>
   withSaveAndVerify(
-    await new AaveOracleFactory(await getFirstSigner()).deploy(...args),
-    eContractid.AaveOracle,
+    await new ViniumOracleFactory(await getFirstSigner()).deploy(...args),
+    eContractid.ViniumOracle,
     args,
     verify
   );
@@ -331,13 +331,13 @@ export const deployWalletBalancerProvider = async (verify?: boolean) =>
     verify
   );
 
-export const deployAaveProtocolDataProvider = async (
+export const deployViniumProtocolDataProvider = async (
   addressesProvider: tEthereumAddress,
   verify?: boolean
 ) =>
   withSaveAndVerify(
-    await new AaveProtocolDataProviderFactory(await getFirstSigner()).deploy(addressesProvider),
-    eContractid.AaveProtocolDataProvider,
+    await new ViniumProtocolDataProviderFactory(await getFirstSigner()).deploy(addressesProvider),
+    eContractid.ViniumProtocolDataProvider,
     [addressesProvider],
     verify
   );
@@ -374,13 +374,13 @@ export const deployDefaultReserveInterestRateStrategy = async (
     verify
   );
 
-export const deployStableDebtToken = async (
+export const deployStableVdToken = async (
   args: [tEthereumAddress, tEthereumAddress, tEthereumAddress, string, string],
   verify: boolean
 ) => {
   const instance = await withSaveAndVerify(
-    await new StableDebtTokenFactory(await getFirstSigner()).deploy(),
-    eContractid.StableDebtToken,
+    await new StableVdTokenFactory(await getFirstSigner()).deploy(),
+    eContractid.StableVdToken,
     [],
     verify
   );
@@ -390,13 +390,13 @@ export const deployStableDebtToken = async (
   return instance;
 };
 
-export const deployVariableDebtToken = async (
+export const deployVariableVdToken = async (
   args: [tEthereumAddress, tEthereumAddress, tEthereumAddress, string, string],
   verify: boolean
 ) => {
   const instance = await withSaveAndVerify(
-    await new VariableDebtTokenFactory(await getFirstSigner()).deploy(),
-    eContractid.VariableDebtToken,
+    await new VariableVdTokenFactory(await getFirstSigner()).deploy(),
+    eContractid.VariableVdToken,
     [],
     verify
   );
@@ -406,23 +406,23 @@ export const deployVariableDebtToken = async (
   return instance;
 };
 
-export const deployGenericStableDebtToken = async (verify?: boolean) =>
+export const deployGenericStableVdToken = async (verify?: boolean) =>
   withSaveAndVerify(
-    await new StableDebtTokenFactory(await getFirstSigner()).deploy(),
-    eContractid.StableDebtToken,
+    await new StableVdTokenFactory(await getFirstSigner()).deploy(),
+    eContractid.StableVdToken,
     [],
     verify
   );
 
-export const deployGenericVariableDebtToken = async (verify?: boolean) =>
+export const deployGenericVariableVdToken = async (verify?: boolean) =>
   withSaveAndVerify(
-    await new VariableDebtTokenFactory(await getFirstSigner()).deploy(),
-    eContractid.VariableDebtToken,
+    await new VariableVdTokenFactory(await getFirstSigner()).deploy(),
+    eContractid.VariableVdToken,
     [],
     verify
   );
 
-export const deployGenericAToken = async (
+export const deployGenericViToken = async (
   [poolAddress, underlyingAssetAddress, treasuryAddress, incentivesController, name, symbol]: [
     tEthereumAddress,
     tEthereumAddress,
@@ -434,8 +434,8 @@ export const deployGenericAToken = async (
   verify: boolean
 ) => {
   const instance = await withSaveAndVerify(
-    await new ATokenFactory(await getFirstSigner()).deploy(),
-    eContractid.AToken,
+    await new ViTokenFactory(await getFirstSigner()).deploy(),
+    eContractid.ViToken,
     [],
     verify
   );
@@ -454,15 +454,15 @@ export const deployGenericAToken = async (
   return instance;
 };
 
-export const deployGenericATokenImpl = async (verify: boolean) =>
+export const deployGenericViTokenImpl = async (verify: boolean) =>
   withSaveAndVerify(
-    await new ATokenFactory(await getFirstSigner()).deploy(),
-    eContractid.AToken,
+    await new ViTokenFactory(await getFirstSigner()).deploy(),
+    eContractid.ViToken,
     [],
     verify
   );
 
-export const deployDelegationAwareAToken = async (
+export const deployDelegationAwareViToken = async (
   [pool, underlyingAssetAddress, treasuryAddress, incentivesController, name, symbol]: [
     tEthereumAddress,
     tEthereumAddress,
@@ -474,8 +474,8 @@ export const deployDelegationAwareAToken = async (
   verify: boolean
 ) => {
   const instance = await withSaveAndVerify(
-    await new DelegationAwareATokenFactory(await getFirstSigner()).deploy(),
-    eContractid.DelegationAwareAToken,
+    await new DelegationAwareViTokenFactory(await getFirstSigner()).deploy(),
+    eContractid.DelegationAwareViToken,
     [],
     verify
   );
@@ -494,10 +494,10 @@ export const deployDelegationAwareAToken = async (
   return instance;
 };
 
-export const deployDelegationAwareATokenImpl = async (verify: boolean) =>
+export const deployDelegationAwareViTokenImpl = async (verify: boolean) =>
   withSaveAndVerify(
-    await new DelegationAwareATokenFactory(await getFirstSigner()).deploy(),
-    eContractid.DelegationAwareAToken,
+    await new DelegationAwareViTokenFactory(await getFirstSigner()).deploy(),
+    eContractid.DelegationAwareViToken,
     [],
     verify
   );
@@ -505,7 +505,7 @@ export const deployDelegationAwareATokenImpl = async (verify: boolean) =>
 export const deployAllMockTokens = async (verify?: boolean) => {
   const tokens: { [symbol: string]: MockContract | MintableERC20 } = {};
 
-  const protoConfigData = getReservesConfigByPool(AavePools.proto);
+  const protoConfigData = getReservesConfigByPool(ViniumPools.proto);
 
   for (const tokenSymbol of Object.keys(TokenContractId)) {
     let decimals = '18';
@@ -553,13 +553,13 @@ export const deployStableAndVariableTokensHelper = async (
     verify
   );
 
-export const deployATokensAndRatesHelper = async (
+export const deployViTokensAndRatesHelper = async (
   args: [tEthereumAddress, tEthereumAddress, tEthereumAddress],
   verify?: boolean
 ) =>
   withSaveAndVerify(
-    await new ATokensAndRatesHelperFactory(await getFirstSigner()).deploy(...args),
-    eContractid.ATokensAndRatesHelper,
+    await new ViTokensAndRatesHelperFactory(await getFirstSigner()).deploy(...args),
+    eContractid.ViTokensAndRatesHelper,
     args,
     verify
   );
@@ -580,13 +580,13 @@ export const authorizeWETHGateway = async (
     .attach(wethGateWay)
     .authorizeLendingPool(lendingPool);
 
-export const deployMockStableDebtToken = async (
+export const deployMockStableVdToken = async (
   args: [tEthereumAddress, tEthereumAddress, tEthereumAddress, string, string, string],
   verify?: boolean
 ) => {
   const instance = await withSaveAndVerify(
-    await new MockStableDebtTokenFactory(await getFirstSigner()).deploy(),
-    eContractid.MockStableDebtToken,
+    await new MockStableVdTokenFactory(await getFirstSigner()).deploy(),
+    eContractid.MockStableVdToken,
     [],
     verify
   );
@@ -604,13 +604,13 @@ export const deployWETHMocked = async (verify?: boolean) =>
     verify
   );
 
-export const deployMockVariableDebtToken = async (
+export const deployMockVariableVdToken = async (
   args: [tEthereumAddress, tEthereumAddress, tEthereumAddress, string, string, string],
   verify?: boolean
 ) => {
   const instance = await withSaveAndVerify(
-    await new MockVariableDebtTokenFactory(await getFirstSigner()).deploy(),
-    eContractid.MockVariableDebtToken,
+    await new MockVariableVdTokenFactory(await getFirstSigner()).deploy(),
+    eContractid.MockVariableVdToken,
     [],
     verify
   );
@@ -620,7 +620,7 @@ export const deployMockVariableDebtToken = async (
   return instance;
 };
 
-export const deployMockAToken = async (
+export const deployMockViToken = async (
   args: [
     tEthereumAddress,
     tEthereumAddress,
@@ -633,8 +633,8 @@ export const deployMockAToken = async (
   verify?: boolean
 ) => {
   const instance = await withSaveAndVerify(
-    await new MockATokenFactory(await getFirstSigner()).deploy(),
-    eContractid.MockAToken,
+    await new MockViTokenFactory(await getFirstSigner()).deploy(),
+    eContractid.MockViToken,
     [],
     verify
   );
@@ -693,18 +693,18 @@ export const deployFlashLiquidationAdapter = async (
     verify
   );
 
-export const chooseATokenDeployment = (id: eContractid) => {
+export const chooseViTokenDeployment = (id: eContractid) => {
   switch (id) {
-    case eContractid.AToken:
-      return deployGenericATokenImpl;
-    case eContractid.DelegationAwareAToken:
-      return deployDelegationAwareATokenImpl;
+    case eContractid.ViToken:
+      return deployGenericViTokenImpl;
+    case eContractid.DelegationAwareViToken:
+      return deployDelegationAwareViTokenImpl;
     default:
-      throw Error(`Missing aToken implementation deployment script for: ${id}`);
+      throw Error(`Missing viToken implementation deployment script for: ${id}`);
   }
 };
 
-export const deployATokenImplementations = async (
+export const deployViTokenImplementations = async (
   pool: ConfigNames,
   reservesConfig: { [key: string]: IReserveParams },
   verify = false
@@ -712,41 +712,41 @@ export const deployATokenImplementations = async (
   const poolConfig = loadPoolConfig(pool);
   const network = <eNetwork>DRE.network.name;
 
-  // Obtain the different AToken implementations of all reserves inside the Market config
-  const aTokenImplementations = [
+  // Obtain the different ViToken implementations of all reserves inside the Market config
+  const viTokenImplementations = [
     ...Object.entries(reservesConfig).reduce<Set<eContractid>>((acc, [, entry]) => {
-      acc.add(entry.aTokenImpl);
+      acc.add(entry.viTokenImpl);
       return acc;
     }, new Set<eContractid>()),
   ];
 
-  for (let x = 0; x < aTokenImplementations.length; x++) {
-    const aTokenAddress = getOptionalParamAddressPerNetwork(
-      poolConfig[aTokenImplementations[x].toString()],
+  for (let x = 0; x < viTokenImplementations.length; x++) {
+    const viTokenAddress = getOptionalParamAddressPerNetwork(
+      poolConfig[viTokenImplementations[x].toString()],
       network
     );
-    if (!notFalsyOrZeroAddress(aTokenAddress)) {
-      const deployImplementationMethod = chooseATokenDeployment(aTokenImplementations[x]);
-      console.log(`Deploying implementation`, aTokenImplementations[x]);
+    if (!notFalsyOrZeroAddress(viTokenAddress)) {
+      const deployImplementationMethod = chooseViTokenDeployment(viTokenImplementations[x]);
+      console.log(`Deploying implementation`, viTokenImplementations[x]);
       await deployImplementationMethod(verify);
     }
   }
 
   // Debt tokens, for now all Market configs follows same implementations
-  const genericStableDebtTokenAddress = getOptionalParamAddressPerNetwork(
-    poolConfig.StableDebtTokenImplementation,
+  const genericStableVdTokenAddress = getOptionalParamAddressPerNetwork(
+    poolConfig.StableVdTokenImplementation,
     network
   );
-  const geneticVariableDebtTokenAddress = getOptionalParamAddressPerNetwork(
-    poolConfig.VariableDebtTokenImplementation,
+  const geneticVariableVdTokenAddress = getOptionalParamAddressPerNetwork(
+    poolConfig.VariableVdTokenImplementation,
     network
   );
 
-  if (!notFalsyOrZeroAddress(genericStableDebtTokenAddress)) {
-    await deployGenericStableDebtToken(verify);
+  if (!notFalsyOrZeroAddress(genericStableVdTokenAddress)) {
+    await deployGenericStableVdToken(verify);
   }
-  if (!notFalsyOrZeroAddress(geneticVariableDebtTokenAddress)) {
-    await deployGenericVariableDebtToken(verify);
+  if (!notFalsyOrZeroAddress(geneticVariableVdTokenAddress)) {
+    await deployGenericVariableVdToken(verify);
   }
 };
 

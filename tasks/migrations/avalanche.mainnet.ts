@@ -44,7 +44,7 @@ task('avalanche:mainnet', 'Deploy market at avalanche')
       console.log('7. Veryfing contracts');
       await DRE.run('verify:general', { all: true, pool: POOL_NAME });
 
-      console.log('8. Veryfing aTokens and debtTokens');
+      console.log('8. Veryfing viTokens and vdTokens');
       await DRE.run('verify:tokens', { pool: POOL_NAME });
     }
 

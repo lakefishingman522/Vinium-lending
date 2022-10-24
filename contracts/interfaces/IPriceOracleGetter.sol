@@ -3,7 +3,7 @@ pragma solidity 0.6.12;
 
 /**
  * @title IPriceOracleGetter interface
- * @notice Interface for the Vini price oracle.
+ * @notice Interface for the Vinium price oracle.
  **/
 
 interface IPriceOracleGetter {

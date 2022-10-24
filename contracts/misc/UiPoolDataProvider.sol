@@ -4,13 +4,13 @@ pragma experimental ABIEncoderV2;
 
 import {IERC20Detailed} from '../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {ILendingPoolAddressesProvider} from '../interfaces/ILendingPoolAddressesProvider.sol';
-import {IViniIncentivesController} from '../interfaces/IViniIncentivesController.sol';
+import {IViniumIncentivesController} from '../interfaces/IViniumIncentivesController.sol';
 import {IUiPoolDataProvider} from './interfaces/IUiPoolDataProvider.sol';
 import {ILendingPool} from '../interfaces/ILendingPool.sol';
 import {IPriceOracleGetter} from '../interfaces/IPriceOracleGetter.sol';
-import {IAToken} from '../interfaces/IAToken.sol';
-import {IVariableDebtToken} from '../interfaces/IVariableDebtToken.sol';
-import {IStableDebtToken} from '../interfaces/IStableDebtToken.sol';
+import {IViToken} from '../interfaces/IViToken.sol';
+import {IVariableVdToken} from '../interfaces/IVariableVdToken.sol';
+import {IStableVdToken} from '../interfaces/IStableVdToken.sol';
 import {WadRayMath} from '../protocol/libraries/math/WadRayMath.sol';
 import {ReserveConfiguration} from '../protocol/libraries/configuration/ReserveConfiguration.sol';
 import {UserConfiguration} from '../protocol/libraries/configuration/UserConfiguration.sol';
@@ -23,10 +23,12 @@ contract UiPoolDataProvider is IUiPoolDataProvider {
   using UserConfiguration for DataTypes.UserConfigurationMap;
 
   address public constant MOCK_USD_ADDRESS = 0x10F7Fc1F91Ba351f9C629c5947AD69bD03C05b96;
-  IViniIncentivesController public immutable override incentivesController;
+  IViniumIncentivesController public immutable override incentivesController;
   IPriceOracleGetter public immutable oracle;
 
-  constructor(IViniIncentivesController _incentivesController, IPriceOracleGetter _oracle) public {
+  constructor(IViniumIncentivesController _incentivesController, IPriceOracleGetter _oracle)
+    public
+  {
     incentivesController = _incentivesController;
     oracle = _oracle;
   }
@@ -87,27 +89,27 @@ contract UiPoolDataProvider is IUiPoolDataProvider {
       reserveData.variableBorrowRate = baseData.currentVariableBorrowRate;
       reserveData.stableBorrowRate = baseData.currentStableBorrowRate;
       reserveData.lastUpdateTimestamp = baseData.lastUpdateTimestamp;
-      reserveData.aTokenAddress = baseData.aTokenAddress;
-      reserveData.stableDebtTokenAddress = baseData.stableDebtTokenAddress;
-      reserveData.variableDebtTokenAddress = baseData.variableDebtTokenAddress;
+      reserveData.viTokenAddress = baseData.viTokenAddress;
+      reserveData.stableVdTokenAddress = baseData.stableVdTokenAddress;
+      reserveData.variableVdTokenAddress = baseData.variableVdTokenAddress;
       reserveData.interestRateStrategyAddress = baseData.interestRateStrategyAddress;
       reserveData.priceInEth = oracle.getAssetPrice(reserveData.underlyingAsset);
 
       reserveData.availableLiquidity = IERC20Detailed(reserveData.underlyingAsset).balanceOf(
-        reserveData.aTokenAddress
+        reserveData.viTokenAddress
       );
       (
         reserveData.totalPrincipalStableDebt,
         ,
         reserveData.averageStableRate,
         reserveData.stableDebtLastUpdateTimestamp
-      ) = IStableDebtToken(reserveData.stableDebtTokenAddress).getSupplyData();
-      reserveData.totalScaledVariableDebt = IVariableDebtToken(reserveData.variableDebtTokenAddress)
+      ) = IStableVdToken(reserveData.stableVdTokenAddress).getSupplyData();
+      reserveData.totalScaledVariableDebt = IVariableVdToken(reserveData.variableVdTokenAddress)
         .scaledTotalSupply();
 
       // reserve configuration
 
-      // we're getting this info from the aToken, because some of assets can be not compliant with ETC20Detailed
+      // we're getting this info from the viToken, because some of assets can be not compliant with ETC20Detailed
       reserveData.symbol = IERC20Detailed(reserveData.underlyingAsset).symbol();
       reserveData.name = '';
 
@@ -137,22 +139,22 @@ contract UiPoolDataProvider is IUiPoolDataProvider {
       // incentives
       if (address(0) != address(incentivesController)) {
         (
-          reserveData.aTokenIncentivesIndex,
+          reserveData.viTokenIncentivesIndex,
           reserveData.aEmissionPerSecond,
           reserveData.aIncentivesLastUpdateTimestamp
-        ) = incentivesController.getAssetData(reserveData.aTokenAddress);
+        ) = incentivesController.getAssetData(reserveData.viTokenAddress);
 
         (
           reserveData.sTokenIncentivesIndex,
           reserveData.sEmissionPerSecond,
           reserveData.sIncentivesLastUpdateTimestamp
-        ) = incentivesController.getAssetData(reserveData.stableDebtTokenAddress);
+        ) = incentivesController.getAssetData(reserveData.stableVdTokenAddress);
 
         (
           reserveData.vTokenIncentivesIndex,
           reserveData.vEmissionPerSecond,
           reserveData.vIncentivesLastUpdateTimestamp
-        ) = incentivesController.getAssetData(reserveData.variableDebtTokenAddress);
+        ) = incentivesController.getAssetData(reserveData.variableVdTokenAddress);
       }
     }
 
@@ -182,37 +184,36 @@ contract UiPoolDataProvider is IUiPoolDataProvider {
       DataTypes.ReserveData memory baseData = lendingPool.getReserveData(reserves[i]);
       // incentives
       if (address(0) != address(incentivesController)) {
-        userReservesData[i].aTokenincentivesUserIndex = incentivesController.getUserAssetData(
+        userReservesData[i].viTokenincentivesUserIndex = incentivesController.getUserAssetData(
           user,
-          baseData.aTokenAddress
+          baseData.viTokenAddress
         );
         userReservesData[i].vTokenincentivesUserIndex = incentivesController.getUserAssetData(
           user,
-          baseData.variableDebtTokenAddress
+          baseData.variableVdTokenAddress
         );
         userReservesData[i].sTokenincentivesUserIndex = incentivesController.getUserAssetData(
           user,
-          baseData.stableDebtTokenAddress
+          baseData.stableVdTokenAddress
         );
       }
       // user reserve data
       userReservesData[i].underlyingAsset = reserves[i];
-      userReservesData[i].scaledATokenBalance = IAToken(baseData.aTokenAddress).scaledBalanceOf(
+      userReservesData[i].scaledViTokenBalance = IViToken(baseData.viTokenAddress).scaledBalanceOf(
         user
       );
       userReservesData[i].usageAsCollateralEnabledOnUser = userConfig.isUsingAsCollateral(i);
 
       if (userConfig.isBorrowing(i)) {
-        userReservesData[i].scaledVariableDebt = IVariableDebtToken(
-          baseData.variableDebtTokenAddress
-        ).scaledBalanceOf(user);
-        userReservesData[i].principalStableDebt = IStableDebtToken(baseData.stableDebtTokenAddress)
+        userReservesData[i].scaledVariableDebt = IVariableVdToken(baseData.variableVdTokenAddress)
+          .scaledBalanceOf(user);
+        userReservesData[i].principalStableDebt = IStableVdToken(baseData.stableVdTokenAddress)
           .principalBalanceOf(user);
         if (userReservesData[i].principalStableDebt != 0) {
-          userReservesData[i].stableBorrowRate = IStableDebtToken(baseData.stableDebtTokenAddress)
+          userReservesData[i].stableBorrowRate = IStableVdToken(baseData.stableVdTokenAddress)
             .getUserStableRate(user);
-          userReservesData[i].stableBorrowLastUpdateTimestamp = IStableDebtToken(
-            baseData.stableDebtTokenAddress
+          userReservesData[i].stableBorrowLastUpdateTimestamp = IStableVdToken(
+            baseData.stableVdTokenAddress
           ).getUserLastUpdated(user);
         }
       }
@@ -260,27 +261,27 @@ contract UiPoolDataProvider is IUiPoolDataProvider {
       reserveData.variableBorrowRate = baseData.currentVariableBorrowRate;
       reserveData.stableBorrowRate = baseData.currentStableBorrowRate;
       reserveData.lastUpdateTimestamp = baseData.lastUpdateTimestamp;
-      reserveData.aTokenAddress = baseData.aTokenAddress;
-      reserveData.stableDebtTokenAddress = baseData.stableDebtTokenAddress;
-      reserveData.variableDebtTokenAddress = baseData.variableDebtTokenAddress;
+      reserveData.viTokenAddress = baseData.viTokenAddress;
+      reserveData.stableVdTokenAddress = baseData.stableVdTokenAddress;
+      reserveData.variableVdTokenAddress = baseData.variableVdTokenAddress;
       reserveData.interestRateStrategyAddress = baseData.interestRateStrategyAddress;
       reserveData.priceInEth = oracle.getAssetPrice(reserveData.underlyingAsset);
 
       reserveData.availableLiquidity = IERC20Detailed(reserveData.underlyingAsset).balanceOf(
-        reserveData.aTokenAddress
+        reserveData.viTokenAddress
       );
       (
         reserveData.totalPrincipalStableDebt,
         ,
         reserveData.averageStableRate,
         reserveData.stableDebtLastUpdateTimestamp
-      ) = IStableDebtToken(reserveData.stableDebtTokenAddress).getSupplyData();
-      reserveData.totalScaledVariableDebt = IVariableDebtToken(reserveData.variableDebtTokenAddress)
+      ) = IStableVdToken(reserveData.stableVdTokenAddress).getSupplyData();
+      reserveData.totalScaledVariableDebt = IVariableVdToken(reserveData.variableVdTokenAddress)
         .scaledTotalSupply();
 
       // reserve configuration
 
-      // we're getting this info from the aToken, because some of assets can be not compliant with ETC20Detailed
+      // we're getting this info from the viToken, because some of assets can be not compliant with ETC20Detailed
       reserveData.symbol = IERC20Detailed(reserveData.underlyingAsset).symbol();
       reserveData.name = '';
 
@@ -310,59 +311,57 @@ contract UiPoolDataProvider is IUiPoolDataProvider {
       // incentives
       if (address(0) != address(incentivesController)) {
         (
-          reserveData.aTokenIncentivesIndex,
+          reserveData.viTokenIncentivesIndex,
           reserveData.aEmissionPerSecond,
           reserveData.aIncentivesLastUpdateTimestamp
-        ) = incentivesController.getAssetData(reserveData.aTokenAddress);
+        ) = incentivesController.getAssetData(reserveData.viTokenAddress);
 
         (
           reserveData.sTokenIncentivesIndex,
           reserveData.sEmissionPerSecond,
           reserveData.sIncentivesLastUpdateTimestamp
-        ) = incentivesController.getAssetData(reserveData.stableDebtTokenAddress);
+        ) = incentivesController.getAssetData(reserveData.stableVdTokenAddress);
 
         (
           reserveData.vTokenIncentivesIndex,
           reserveData.vEmissionPerSecond,
           reserveData.vIncentivesLastUpdateTimestamp
-        ) = incentivesController.getAssetData(reserveData.variableDebtTokenAddress);
+        ) = incentivesController.getAssetData(reserveData.variableVdTokenAddress);
       }
 
       if (user != address(0)) {
         // incentives
         if (address(0) != address(incentivesController)) {
-          userReservesData[i].aTokenincentivesUserIndex = incentivesController.getUserAssetData(
+          userReservesData[i].viTokenincentivesUserIndex = incentivesController.getUserAssetData(
             user,
-            reserveData.aTokenAddress
+            reserveData.viTokenAddress
           );
           userReservesData[i].vTokenincentivesUserIndex = incentivesController.getUserAssetData(
             user,
-            reserveData.variableDebtTokenAddress
+            reserveData.variableVdTokenAddress
           );
           userReservesData[i].sTokenincentivesUserIndex = incentivesController.getUserAssetData(
             user,
-            reserveData.stableDebtTokenAddress
+            reserveData.stableVdTokenAddress
           );
         }
         // user reserve data
         userReservesData[i].underlyingAsset = reserveData.underlyingAsset;
-        userReservesData[i].scaledATokenBalance = IAToken(reserveData.aTokenAddress)
+        userReservesData[i].scaledViTokenBalance = IViToken(reserveData.viTokenAddress)
           .scaledBalanceOf(user);
         userReservesData[i].usageAsCollateralEnabledOnUser = userConfig.isUsingAsCollateral(i);
 
         if (userConfig.isBorrowing(i)) {
-          userReservesData[i].scaledVariableDebt = IVariableDebtToken(
-            reserveData.variableDebtTokenAddress
+          userReservesData[i].scaledVariableDebt = IVariableVdToken(
+            reserveData.variableVdTokenAddress
           ).scaledBalanceOf(user);
-          userReservesData[i].principalStableDebt = IStableDebtToken(
-            reserveData.stableDebtTokenAddress
-          ).principalBalanceOf(user);
+          userReservesData[i].principalStableDebt = IStableVdToken(reserveData.stableVdTokenAddress)
+            .principalBalanceOf(user);
           if (userReservesData[i].principalStableDebt != 0) {
-            userReservesData[i].stableBorrowRate = IStableDebtToken(
-              reserveData.stableDebtTokenAddress
-            ).getUserStableRate(user);
-            userReservesData[i].stableBorrowLastUpdateTimestamp = IStableDebtToken(
-              reserveData.stableDebtTokenAddress
+            userReservesData[i].stableBorrowRate = IStableVdToken(reserveData.stableVdTokenAddress)
+              .getUserStableRate(user);
+            userReservesData[i].stableBorrowLastUpdateTimestamp = IStableVdToken(
+              reserveData.stableVdTokenAddress
             ).getUserLastUpdated(user);
           }
         }

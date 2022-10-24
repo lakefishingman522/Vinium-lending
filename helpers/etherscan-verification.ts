@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { exit } from 'process';
 import fs from 'fs';
 import { file } from 'tmp-promise';
@@ -77,7 +78,6 @@ export const runTaskWithRetry = async (
 ) => {
   let counter = times;
   await delay(msDelay);
-
   try {
     if (times > 1) {
       await DRE.run(task, params);
@@ -108,6 +108,7 @@ export const runTaskWithRetry = async (
       );
       return;
     }
+    console.log('=================');
     console.error('[ETHERSCAN][ERROR]', error.message);
     console.log();
     console.info(`[ETHERSCAN][[INFO] Retrying attemps: ${counter}.`);

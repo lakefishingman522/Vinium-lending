@@ -3,12 +3,12 @@ pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
 import {ILendingPoolAddressesProvider} from '../interfaces/ILendingPoolAddressesProvider.sol';
-import {IViniIncentivesController} from '../interfaces/IViniIncentivesController.sol';
+import {IViniumIncentivesController} from '../interfaces/IViniumIncentivesController.sol';
 import {IUiIncentiveDataProviderV2} from './interfaces/IUiIncentiveDataProviderV2.sol';
 import {ILendingPool} from '../interfaces/ILendingPool.sol';
-import {IAToken} from '../interfaces/IAToken.sol';
-import {IVariableDebtToken} from '../interfaces/IVariableDebtToken.sol';
-import {IStableDebtToken} from '../interfaces/IStableDebtToken.sol';
+import {IViToken} from '../interfaces/IViToken.sol';
+import {IVariableVdToken} from '../interfaces/IVariableVdToken.sol';
+import {IStableVdToken} from '../interfaces/IStableVdToken.sol';
 import {UserConfiguration} from '../protocol/libraries/configuration/UserConfiguration.sol';
 import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
 import {IERC20Detailed} from '../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
@@ -52,27 +52,27 @@ contract UiIncentiveDataProviderV2 is IUiIncentiveDataProviderV2 {
 
       DataTypes.ReserveData memory baseData = lendingPool.getReserveData(reserves[i]);
 
-      try IStableDebtToken(baseData.aTokenAddress).getIncentivesController() returns (
-        IViniIncentivesController aTokenIncentiveController
+      try IStableVdToken(baseData.viTokenAddress).getIncentivesController() returns (
+        IViniumIncentivesController viTokenIncentiveController
       ) {
-        if (address(aTokenIncentiveController) != address(0)) {
-          address aRewardToken = aTokenIncentiveController.REWARD_TOKEN();
+        if (address(viTokenIncentiveController) != address(0)) {
+          address aRewardToken = viTokenIncentiveController.REWARD_TOKEN();
 
-          try aTokenIncentiveController.getAssetData(baseData.aTokenAddress) returns (
-            uint256 aTokenIncentivesIndex,
+          try viTokenIncentiveController.getAssetData(baseData.viTokenAddress) returns (
+            uint256 viTokenIncentivesIndex,
             uint256 aEmissionPerSecond,
             uint256 aIncentivesLastUpdateTimestamp
           ) {
             reserveIncentiveData.aIncentiveData = IncentiveData(
               aEmissionPerSecond,
               aIncentivesLastUpdateTimestamp,
-              aTokenIncentivesIndex,
-              aTokenIncentiveController.DISTRIBUTION_END(),
-              baseData.aTokenAddress,
+              viTokenIncentivesIndex,
+              viTokenIncentiveController.DISTRIBUTION_END(),
+              baseData.viTokenAddress,
               aRewardToken,
-              address(aTokenIncentiveController),
+              address(viTokenIncentiveController),
               IERC20Detailed(aRewardToken).decimals(),
-              aTokenIncentiveController.PRECISION()
+              viTokenIncentiveController.PRECISION()
             );
           } catch (
             bytes memory /*lowLevelData*/
@@ -80,19 +80,19 @@ contract UiIncentiveDataProviderV2 is IUiIncentiveDataProviderV2 {
             (
               uint256 aEmissionPerSecond,
               uint256 aIncentivesLastUpdateTimestamp,
-              uint256 aTokenIncentivesIndex
-            ) = aTokenIncentiveController.assets(baseData.aTokenAddress);
+              uint256 viTokenIncentivesIndex
+            ) = viTokenIncentiveController.assets(baseData.viTokenAddress);
 
             reserveIncentiveData.aIncentiveData = IncentiveData(
               aEmissionPerSecond,
               aIncentivesLastUpdateTimestamp,
-              aTokenIncentivesIndex,
-              aTokenIncentiveController.DISTRIBUTION_END(),
-              baseData.aTokenAddress,
+              viTokenIncentivesIndex,
+              viTokenIncentiveController.DISTRIBUTION_END(),
+              baseData.viTokenAddress,
               aRewardToken,
-              address(aTokenIncentiveController),
+              address(viTokenIncentiveController),
               IERC20Detailed(aRewardToken).decimals(),
-              aTokenIncentiveController.PRECISION()
+              viTokenIncentiveController.PRECISION()
             );
           }
         }
@@ -102,12 +102,12 @@ contract UiIncentiveDataProviderV2 is IUiIncentiveDataProviderV2 {
         // Will not get here
       }
 
-      try IStableDebtToken(baseData.stableDebtTokenAddress).getIncentivesController() returns (
-        IViniIncentivesController sTokenIncentiveController
+      try IStableVdToken(baseData.stableVdTokenAddress).getIncentivesController() returns (
+        IViniumIncentivesController sTokenIncentiveController
       ) {
         if (address(sTokenIncentiveController) != address(0)) {
           address sRewardToken = sTokenIncentiveController.REWARD_TOKEN();
-          try sTokenIncentiveController.getAssetData(baseData.stableDebtTokenAddress) returns (
+          try sTokenIncentiveController.getAssetData(baseData.stableVdTokenAddress) returns (
             uint256 sTokenIncentivesIndex,
             uint256 sEmissionPerSecond,
             uint256 sIncentivesLastUpdateTimestamp
@@ -117,7 +117,7 @@ contract UiIncentiveDataProviderV2 is IUiIncentiveDataProviderV2 {
               sIncentivesLastUpdateTimestamp,
               sTokenIncentivesIndex,
               sTokenIncentiveController.DISTRIBUTION_END(),
-              baseData.stableDebtTokenAddress,
+              baseData.stableVdTokenAddress,
               sRewardToken,
               address(sTokenIncentiveController),
               IERC20Detailed(sRewardToken).decimals(),
@@ -130,14 +130,14 @@ contract UiIncentiveDataProviderV2 is IUiIncentiveDataProviderV2 {
               uint256 sEmissionPerSecond,
               uint256 sIncentivesLastUpdateTimestamp,
               uint256 sTokenIncentivesIndex
-            ) = sTokenIncentiveController.assets(baseData.stableDebtTokenAddress);
+            ) = sTokenIncentiveController.assets(baseData.stableVdTokenAddress);
 
             reserveIncentiveData.sIncentiveData = IncentiveData(
               sEmissionPerSecond,
               sIncentivesLastUpdateTimestamp,
               sTokenIncentivesIndex,
               sTokenIncentiveController.DISTRIBUTION_END(),
-              baseData.stableDebtTokenAddress,
+              baseData.stableVdTokenAddress,
               sRewardToken,
               address(sTokenIncentiveController),
               IERC20Detailed(sRewardToken).decimals(),
@@ -151,13 +151,13 @@ contract UiIncentiveDataProviderV2 is IUiIncentiveDataProviderV2 {
         // Will not get here
       }
 
-      try IStableDebtToken(baseData.variableDebtTokenAddress).getIncentivesController() returns (
-        IViniIncentivesController vTokenIncentiveController
+      try IStableVdToken(baseData.variableVdTokenAddress).getIncentivesController() returns (
+        IViniumIncentivesController vTokenIncentiveController
       ) {
         if (address(vTokenIncentiveController) != address(0)) {
           address vRewardToken = vTokenIncentiveController.REWARD_TOKEN();
 
-          try vTokenIncentiveController.getAssetData(baseData.variableDebtTokenAddress) returns (
+          try vTokenIncentiveController.getAssetData(baseData.variableVdTokenAddress) returns (
             uint256 vTokenIncentivesIndex,
             uint256 vEmissionPerSecond,
             uint256 vIncentivesLastUpdateTimestamp
@@ -167,7 +167,7 @@ contract UiIncentiveDataProviderV2 is IUiIncentiveDataProviderV2 {
               vIncentivesLastUpdateTimestamp,
               vTokenIncentivesIndex,
               vTokenIncentiveController.DISTRIBUTION_END(),
-              baseData.variableDebtTokenAddress,
+              baseData.variableVdTokenAddress,
               vRewardToken,
               address(vTokenIncentiveController),
               IERC20Detailed(vRewardToken).decimals(),
@@ -180,14 +180,14 @@ contract UiIncentiveDataProviderV2 is IUiIncentiveDataProviderV2 {
               uint256 vEmissionPerSecond,
               uint256 vIncentivesLastUpdateTimestamp,
               uint256 vTokenIncentivesIndex
-            ) = vTokenIncentiveController.assets(baseData.variableDebtTokenAddress);
+            ) = vTokenIncentiveController.assets(baseData.variableVdTokenAddress);
 
             reserveIncentiveData.vIncentiveData = IncentiveData(
               vEmissionPerSecond,
               vIncentivesLastUpdateTimestamp,
               vTokenIncentivesIndex,
               vTokenIncentiveController.DISTRIBUTION_END(),
-              baseData.variableDebtTokenAddress,
+              baseData.variableVdTokenAddress,
               vRewardToken,
               address(vTokenIncentiveController),
               IERC20Detailed(vRewardToken).decimals(),
@@ -233,42 +233,42 @@ contract UiIncentiveDataProviderV2 is IUiIncentiveDataProviderV2 {
 
       IUiIncentiveDataProviderV2.UserIncentiveData memory aUserIncentiveData;
 
-      try IAToken(baseData.aTokenAddress).getIncentivesController() returns (
-        IViniIncentivesController aTokenIncentiveController
+      try IViToken(baseData.viTokenAddress).getIncentivesController() returns (
+        IViniumIncentivesController viTokenIncentiveController
       ) {
-        if (address(aTokenIncentiveController) != address(0)) {
-          address aRewardToken = aTokenIncentiveController.REWARD_TOKEN();
-          aUserIncentiveData.tokenincentivesUserIndex = aTokenIncentiveController.getUserAssetData(
+        if (address(viTokenIncentiveController) != address(0)) {
+          address aRewardToken = viTokenIncentiveController.REWARD_TOKEN();
+          aUserIncentiveData.tokenincentivesUserIndex = viTokenIncentiveController.getUserAssetData(
             user,
-            baseData.aTokenAddress
+            baseData.viTokenAddress
           );
-          aUserIncentiveData.userUnclaimedRewards = aTokenIncentiveController
+          aUserIncentiveData.userUnclaimedRewards = viTokenIncentiveController
             .getUserUnclaimedRewards(user);
-          aUserIncentiveData.tokenAddress = baseData.aTokenAddress;
+          aUserIncentiveData.tokenAddress = baseData.viTokenAddress;
           aUserIncentiveData.rewardTokenAddress = aRewardToken;
-          aUserIncentiveData.incentiveControllerAddress = address(aTokenIncentiveController);
+          aUserIncentiveData.incentiveControllerAddress = address(viTokenIncentiveController);
           aUserIncentiveData.rewardTokenDecimals = IERC20Detailed(aRewardToken).decimals();
         }
       } catch (
         bytes memory /*lowLevelData*/
       ) {}
 
-      userReservesIncentivesData[i].aTokenIncentivesUserData = aUserIncentiveData;
+      userReservesIncentivesData[i].viTokenIncentivesUserData = aUserIncentiveData;
 
       UserIncentiveData memory vUserIncentiveData;
 
-      try IVariableDebtToken(baseData.variableDebtTokenAddress).getIncentivesController() returns (
-        IViniIncentivesController vTokenIncentiveController
+      try IVariableVdToken(baseData.variableVdTokenAddress).getIncentivesController() returns (
+        IViniumIncentivesController vTokenIncentiveController
       ) {
         if (address(vTokenIncentiveController) != address(0)) {
           address vRewardToken = vTokenIncentiveController.REWARD_TOKEN();
           vUserIncentiveData.tokenincentivesUserIndex = vTokenIncentiveController.getUserAssetData(
             user,
-            baseData.variableDebtTokenAddress
+            baseData.variableVdTokenAddress
           );
           vUserIncentiveData.userUnclaimedRewards = vTokenIncentiveController
             .getUserUnclaimedRewards(user);
-          vUserIncentiveData.tokenAddress = baseData.variableDebtTokenAddress;
+          vUserIncentiveData.tokenAddress = baseData.variableVdTokenAddress;
           vUserIncentiveData.rewardTokenAddress = vRewardToken;
           vUserIncentiveData.incentiveControllerAddress = address(vTokenIncentiveController);
           vUserIncentiveData.rewardTokenDecimals = IERC20Detailed(vRewardToken).decimals();
@@ -281,18 +281,18 @@ contract UiIncentiveDataProviderV2 is IUiIncentiveDataProviderV2 {
 
       UserIncentiveData memory sUserIncentiveData;
 
-      try IStableDebtToken(baseData.stableDebtTokenAddress).getIncentivesController() returns (
-        IViniIncentivesController sTokenIncentiveController
+      try IStableVdToken(baseData.stableVdTokenAddress).getIncentivesController() returns (
+        IViniumIncentivesController sTokenIncentiveController
       ) {
         if (address(sTokenIncentiveController) != address(0)) {
           address sRewardToken = sTokenIncentiveController.REWARD_TOKEN();
           sUserIncentiveData.tokenincentivesUserIndex = sTokenIncentiveController.getUserAssetData(
             user,
-            baseData.stableDebtTokenAddress
+            baseData.stableVdTokenAddress
           );
           sUserIncentiveData.userUnclaimedRewards = sTokenIncentiveController
             .getUserUnclaimedRewards(user);
-          sUserIncentiveData.tokenAddress = baseData.stableDebtTokenAddress;
+          sUserIncentiveData.tokenAddress = baseData.stableVdTokenAddress;
           sUserIncentiveData.rewardTokenAddress = sRewardToken;
           sUserIncentiveData.incentiveControllerAddress = address(sTokenIncentiveController);
           sUserIncentiveData.rewardTokenDecimals = IERC20Detailed(sRewardToken).decimals();

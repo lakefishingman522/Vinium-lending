@@ -26,7 +26,7 @@ interface IUiIncentiveDataProviderV2 {
 
   struct UserReserveIncentiveData {
     address underlyingAsset;
-    UserIncentiveData aTokenIncentivesUserData;
+    UserIncentiveData viTokenIncentivesUserData;
     UserIncentiveData vTokenIncentivesUserData;
     UserIncentiveData sTokenIncentivesUserData;
   }

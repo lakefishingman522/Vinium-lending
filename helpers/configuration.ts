@@ -1,5 +1,5 @@
 import {
-  AavePools,
+  ViniumPools,
   iMultiPoolsAssets,
   IReserveParams,
   PoolConfiguration,
@@ -7,12 +7,8 @@ import {
   IBaseConfiguration,
 } from './types';
 import { getEthersSignersAddresses, getParamPerPool } from './contracts-helpers';
-import AaveConfig from '../markets/aave';
-import MaticConfig from '../markets/matic';
 import AvalancheConfig from '../markets/avalanche';
-import AmmConfig from '../markets/amm';
-
-import { CommonsConfig } from '../markets/aave/commons';
+import { CommonsConfig } from '../markets/avalanche/commons';
 import { DRE, filterMapBy } from './misc-utils';
 import { tEthereumAddress } from './types';
 import { getParamPerNetwork } from './contracts-helpers';
@@ -20,22 +16,16 @@ import { deployWETHMocked } from './contracts-deployments';
 
 export enum ConfigNames {
   Commons = 'Commons',
-  Aave = 'Aave',
+  Vinium = 'Vinium',
   Matic = 'Matic',
   Amm = 'Amm',
-  Avalanche = 'Avalanche'
+  Avalanche = 'Avalanche',
 }
 
 export const loadPoolConfig = (configName: ConfigNames): PoolConfiguration => {
   switch (configName) {
-    case ConfigNames.Aave:
-      return AaveConfig;
-    case ConfigNames.Matic:
-      return MaticConfig;
-    case ConfigNames.Amm:
-      return AmmConfig;
-      case ConfigNames.Avalanche:
-        return AvalancheConfig;
+    case ConfigNames.Avalanche:
+      return AvalancheConfig;
     case ConfigNames.Commons:
       return CommonsConfig;
     default:
@@ -51,21 +41,15 @@ export const loadPoolConfig = (configName: ConfigNames): PoolConfiguration => {
 // PROTOCOL PARAMS PER POOL
 // ----------------
 
-export const getReservesConfigByPool = (pool: AavePools): iMultiPoolsAssets<IReserveParams> =>
+export const getReservesConfigByPool = (pool: ViniumPools): iMultiPoolsAssets<IReserveParams> =>
   getParamPerPool<iMultiPoolsAssets<IReserveParams>>(
     {
-      [AavePools.proto]: {
-        ...AaveConfig.ReservesConfig,
-      },
-      [AavePools.amm]: {
-        ...AmmConfig.ReservesConfig,
-      },
-      [AavePools.matic]: {
-        ...MaticConfig.ReservesConfig,
-      },
-      [AavePools.avalanche]: {
+      [ViniumPools.proto]: {
         ...AvalancheConfig.ReservesConfig,
-      }
+      },
+      [ViniumPools.avalanche]: {
+        ...AvalancheConfig.ReservesConfig,
+      },
     },
     pool
   );
@@ -99,10 +83,10 @@ export const getTreasuryAddress = async (config: IBaseConfiguration): Promise<tE
   return getParamPerNetwork(config.ReserveFactorTreasuryAddress, <eNetwork>currentNetwork);
 };
 
-export const getATokenDomainSeparatorPerNetwork = (
+export const getViTokenDomainSeparatorPerNetwork = (
   network: eNetwork,
   config: IBaseConfiguration
-): tEthereumAddress => getParamPerNetwork<tEthereumAddress>(config.ATokenDomainSeparator, network);
+): tEthereumAddress => getParamPerNetwork<tEthereumAddress>(config.ViTokenDomainSeparator, network);
 
 export const getWethAddress = async (config: IBaseConfiguration) => {
   const currentNetwork = process.env.FORK ? process.env.FORK : DRE.network.name;

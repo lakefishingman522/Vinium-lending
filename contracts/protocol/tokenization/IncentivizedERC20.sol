@@ -5,12 +5,12 @@ import {Context} from '../../dependencies/openzeppelin/contracts/Context.sol';
 import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {IERC20Detailed} from '../../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {SafeMath} from '../../dependencies/openzeppelin/contracts/SafeMath.sol';
-import {IViniIncentivesController} from '../../interfaces/IViniIncentivesController.sol';
+import {IViniumIncentivesController} from '../../interfaces/IViniumIncentivesController.sol';
 
 /**
  * @title ERC20
  * @notice Basic ERC20 implementation
- * @author Vini, inspired by the Openzeppelin ERC20 implementation
+ * @author Vinium, inspired by the Openzeppelin ERC20 implementation
  **/
 abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
   using SafeMath for uint256;
@@ -69,10 +69,10 @@ abstract contract IncentivizedERC20 is Context, IERC20, IERC20Detailed {
   }
 
   /**
-   * @return Abstract function implemented by the child aToken/debtToken.
-   * Done this way in order to not break compatibility with previous versions of aTokens/debtTokens
+   * @return Abstract function implemented by the child viToken/vdToken.
+   * Done this way in order to not break compatibility with previous versions of viTokens/vdTokens
    **/
-  function _getIncentivesController() internal view virtual returns (IViniIncentivesController);
+  function _getIncentivesController() internal view virtual returns (IViniumIncentivesController);
 
   /**
    * @dev Executes a transfer of tokens from _msgSender() to recipient

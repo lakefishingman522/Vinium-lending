@@ -1,6 +1,6 @@
 import { task } from 'hardhat/config';
 import { getParamPerNetwork } from '../../helpers/contracts-helpers';
-import { deployAaveOracle, deployLendingRateOracle } from '../../helpers/contracts-deployments';
+import { deployViniumOracle, deployLendingRateOracle } from '../../helpers/contracts-deployments';
 import { setInitialMarketRatesInRatesOracleByHelper } from '../../helpers/oracles-helpers';
 import { ICommonConfiguration, eNetwork, SymbolMap } from '../../helpers/types';
 import { waitForTx, notFalsyOrZeroAddress } from '../../helpers/misc-utils';
@@ -12,12 +12,12 @@ import {
   getQuoteCurrency,
 } from '../../helpers/configuration';
 import {
-  getAaveOracle,
+  getViniumOracle,
   getLendingPoolAddressesProvider,
   getLendingRateOracle,
   getPairsTokenAggregator,
 } from '../../helpers/contracts-getters';
-import { AaveOracle, LendingRateOracle } from '../../types';
+import { ViniumOracle, LendingRateOracle } from '../../types';
 
 task('full:deploy-oracles', 'Deploy oracles for dev enviroment')
   .addFlag('verify', 'Verify contracts at Etherscan')
@@ -25,10 +25,8 @@ task('full:deploy-oracles', 'Deploy oracles for dev enviroment')
   .setAction(async ({ verify, pool }, DRE) => {
     try {
       await DRE.run('set-DRE');
-
       const network = <eNetwork>DRE.network.name;
       const poolConfig = loadPoolConfig(pool);
-      // console.log('poolConfig ==' + poolConfig);
       const {
         ProtocolGlobalParams: { UsdAddress },
         ReserveAssets,
@@ -38,36 +36,30 @@ task('full:deploy-oracles', 'Deploy oracles for dev enviroment')
       const lendingRateOracles = getLendingRateOracles(poolConfig);
       const addressesProvider = await getLendingPoolAddressesProvider();
       const admin = await getGenesisPoolAdmin(poolConfig);
-      const aaveOracleAddress = getParamPerNetwork(poolConfig.AaveOracle, network);
+      const viniumOracleAddress = getParamPerNetwork(poolConfig.ViniumOracle, network);
       const lendingRateOracleAddress = getParamPerNetwork(poolConfig.LendingRateOracle, network);
       const fallbackOracleAddress = await getParamPerNetwork(FallbackOracle, network);
       const reserveAssets = await getParamPerNetwork(ReserveAssets, network);
-      // console.log('reserveAssets ==' + reserveAssets);
       const chainlinkAggregators = await getParamPerNetwork(ChainlinkAggregator, network);
+
       const tokensToWatch: SymbolMap<string> = {
         ...reserveAssets,
         USD: UsdAddress,
-        WINE: '0xC55036B5348CfB45a932481744645985010d3A44',
       };
-      console.log('tokensToWatch ==' + JSON.stringify(tokensToWatch));
-      console.log('chainlinkAggregators ==' + chainlinkAggregators);
-      console.log('poolConfig.OracleQuoteCurrency ==' + poolConfig.OracleQuoteCurrency);
       const [tokens, aggregators] = getPairsTokenAggregator(
         tokensToWatch,
         chainlinkAggregators,
         poolConfig.OracleQuoteCurrency
       );
-      console.log('there', tokens);
-      console.log('there', aggregators);
 
-      let aaveOracle: AaveOracle;
+      let viniumOracle: ViniumOracle;
       let lendingRateOracle: LendingRateOracle;
 
-      if (notFalsyOrZeroAddress(aaveOracleAddress)) {
-        aaveOracle = await await getAaveOracle(aaveOracleAddress);
-        await waitForTx(await aaveOracle.setAssetSources(tokens, aggregators));
+      if (notFalsyOrZeroAddress(viniumOracleAddress)) {
+        viniumOracle = await await getViniumOracle(viniumOracleAddress);
+        await waitForTx(await viniumOracle.setAssetSources(tokens, aggregators));
       } else {
-        aaveOracle = await deployAaveOracle(
+        viniumOracle = await deployViniumOracle(
           [
             tokens,
             aggregators,
@@ -77,7 +69,7 @@ task('full:deploy-oracles', 'Deploy oracles for dev enviroment')
           ],
           verify
         );
-        await waitForTx(await aaveOracle.setAssetSources(tokens, aggregators));
+        await waitForTx(await viniumOracle.setAssetSources(tokens, aggregators));
       }
 
       if (notFalsyOrZeroAddress(lendingRateOracleAddress)) {
@@ -93,11 +85,11 @@ task('full:deploy-oracles', 'Deploy oracles for dev enviroment')
         );
       }
 
-      console.log('Aave Oracle: %s', aaveOracle.address);
+      console.log('Vinium Oracle: %s', viniumOracle.address);
       console.log('Lending Rate Oracle: %s', lendingRateOracle.address);
 
       // Register the proxy price provider on the addressesProvider
-      await waitForTx(await addressesProvider.setPriceOracle(aaveOracle.address));
+      await waitForTx(await addressesProvider.setPriceOracle(viniumOracle.address));
       await waitForTx(await addressesProvider.setLendingRateOracle(lendingRateOracle.address));
     } catch (error) {
       if (DRE.network.name.includes('tenderly')) {

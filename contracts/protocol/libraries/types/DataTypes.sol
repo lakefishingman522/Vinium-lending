@@ -18,9 +18,9 @@ library DataTypes {
     uint128 currentStableBorrowRate;
     uint40 lastUpdateTimestamp;
     //tokens addresses
-    address aTokenAddress;
-    address stableDebtTokenAddress;
-    address variableDebtTokenAddress;
+    address viTokenAddress;
+    address stableVdTokenAddress;
+    address variableVdTokenAddress;
     //address of the interest rate strategy
     address interestRateStrategyAddress;
     //the id of the reserve. Represents the position in the list of the active reserves
@@ -45,5 +45,9 @@ library DataTypes {
     uint256 data;
   }
 
-  enum InterestRateMode {NONE, STABLE, VARIABLE}
+  enum InterestRateMode {
+    NONE,
+    STABLE,
+    VARIABLE
+  }
 }

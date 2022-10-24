@@ -14,7 +14,7 @@ import {DataTypes} from '../types/DataTypes.sol';
 
 /**
  * @title GenericLogic library
- * @author Vini
+ * @author Vinium
  * @title Implements protocol-level logic to calculate and validate the state of a user
  */
 library GenericLogic {
@@ -185,7 +185,7 @@ library GenericLogic {
       vars.reserveUnitPrice = IPriceOracleGetter(oracle).getAssetPrice(vars.currentReserveAddress);
 
       if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
-        vars.compoundedLiquidityBalance = IERC20(currentReserve.aTokenAddress).balanceOf(user);
+        vars.compoundedLiquidityBalance = IERC20(currentReserve.viTokenAddress).balanceOf(user);
 
         uint256 liquidityBalanceETH = vars
           .reserveUnitPrice
@@ -201,11 +201,9 @@ library GenericLogic {
       }
 
       if (userConfig.isBorrowing(vars.i)) {
-        vars.compoundedBorrowBalance = IERC20(currentReserve.stableDebtTokenAddress).balanceOf(
-          user
-        );
+        vars.compoundedBorrowBalance = IERC20(currentReserve.stableVdTokenAddress).balanceOf(user);
         vars.compoundedBorrowBalance = vars.compoundedBorrowBalance.add(
-          IERC20(currentReserve.variableDebtTokenAddress).balanceOf(user)
+          IERC20(currentReserve.variableVdTokenAddress).balanceOf(user)
         );
 
         vars.totalDebtInETH = vars.totalDebtInETH.add(

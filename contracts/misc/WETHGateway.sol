@@ -7,7 +7,7 @@ import {IERC20} from '../dependencies/openzeppelin/contracts/IERC20.sol';
 import {IWETH} from './interfaces/IWETH.sol';
 import {IWETHGateway} from './interfaces/IWETHGateway.sol';
 import {ILendingPool} from '../interfaces/ILendingPool.sol';
-import {IAToken} from '../interfaces/IAToken.sol';
+import {IViToken} from '../interfaces/IViToken.sol';
 import {ReserveConfiguration} from '../protocol/libraries/configuration/ReserveConfiguration.sol';
 import {UserConfiguration} from '../protocol/libraries/configuration/UserConfiguration.sol';
 import {Helpers} from '../protocol/libraries/helpers/Helpers.sol';
@@ -32,10 +32,10 @@ contract WETHGateway is IWETHGateway, Ownable {
   }
 
   /**
-   * @dev deposits WETH into the reserve, using native ETH. A corresponding amount of the overlying asset (aTokens)
+   * @dev deposits WETH into the reserve, using native ETH. A corresponding amount of the overlying asset (viTokens)
    * is minted.
    * @param lendingPool address of the targeted underlying lending pool
-   * @param onBehalfOf address of the user who will receive the aTokens representing the deposit
+   * @param onBehalfOf address of the user who will receive the viTokens representing the deposit
    * @param referralCode integrators are assigned a referral code and can potentially receive rewards.
    **/
   function depositETH(
@@ -58,7 +58,9 @@ contract WETHGateway is IWETHGateway, Ownable {
     uint256 amount,
     address to
   ) external override {
-    IAToken aWETH = IAToken(ILendingPool(lendingPool).getReserveData(address(WETH)).aTokenAddress);
+    IViToken aWETH = IViToken(
+      ILendingPool(lendingPool).getReserveData(address(WETH)).viTokenAddress
+    );
     uint256 userBalance = aWETH.balanceOf(msg.sender);
     uint256 amountToWithdraw = amount;
 
@@ -85,16 +87,15 @@ contract WETHGateway is IWETHGateway, Ownable {
     uint256 rateMode,
     address onBehalfOf
   ) external payable override {
-    (uint256 stableDebt, uint256 variableDebt) =
-      Helpers.getUserCurrentDebtMemory(
-        onBehalfOf,
-        ILendingPool(lendingPool).getReserveData(address(WETH))
-      );
+    (uint256 stableDebt, uint256 variableDebt) = Helpers.getUserCurrentDebtMemory(
+      onBehalfOf,
+      ILendingPool(lendingPool).getReserveData(address(WETH))
+    );
 
-    uint256 paybackAmount =
-      DataTypes.InterestRateMode(rateMode) == DataTypes.InterestRateMode.STABLE
-        ? stableDebt
-        : variableDebt;
+    uint256 paybackAmount = DataTypes.InterestRateMode(rateMode) ==
+      DataTypes.InterestRateMode.STABLE
+      ? stableDebt
+      : variableDebt;
 
     if (amount < paybackAmount) {
       paybackAmount = amount;
@@ -108,7 +109,7 @@ contract WETHGateway is IWETHGateway, Ownable {
   }
 
   /**
-   * @dev borrow WETH, unwraps to ETH and send both the ETH and DebtTokens to msg.sender, via `approveDelegation` and onBehalf argument in `LendingPool.borrow`.
+   * @dev borrow WETH, unwraps to ETH and send both the ETH and VdTokens to msg.sender, via `approveDelegation` and onBehalf argument in `LendingPool.borrow`.
    * @param lendingPool address of the targeted underlying lending pool
    * @param amount the amount of ETH to borrow
    * @param interesRateMode the interest rate mode

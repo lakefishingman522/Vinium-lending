@@ -7,7 +7,7 @@ import {
 } from '../../helpers/configuration';
 import { ZERO_ADDRESS } from '../../helpers/constants';
 import {
-  getAaveProtocolDataProvider,
+  getViniumProtocolDataProvider,
   getAddressById,
   getLendingPool,
   getLendingPoolAddressesProvider,
@@ -32,6 +32,8 @@ task('verify:general', 'Verify contracts at Etherscan')
     await localDRE.run('set-DRE');
     const network = localDRE.network.name as eNetwork;
     const poolConfig = loadPoolConfig(pool);
+    console.log(poolConfig);
+    console.log('pool name: ', pool);
     const {
       ReserveAssets,
       ReservesConfig,
@@ -58,8 +60,13 @@ task('verify:general', 'Verify contracts at Etherscan')
     const lendingPoolConfiguratorProxy = await getProxy(lendingPoolConfiguratorAddress);
     const lendingPoolCollateralManagerProxy = await getProxy(lendingPoolCollateralManagerAddress);
 
+    console.log('==============: ', all);
     if (all) {
+      console.log(network);
+      console.log(LendingPool);
       const lendingPoolImplAddress = getParamPerNetwork(LendingPool, network);
+      console.log('============== lendingPoolImplAddress: ', lendingPoolImplAddress);
+      console.log(lendingPoolImplAddress);
       const lendingPoolImpl = notFalsyOrZeroAddress(lendingPoolImplAddress)
         ? await getLendingPoolImpl(lendingPoolImplAddress)
         : await getLendingPoolImpl();
@@ -67,6 +74,10 @@ task('verify:general', 'Verify contracts at Etherscan')
       const lendingPoolConfiguratorImplAddress = getParamPerNetwork(
         LendingPoolConfigurator,
         network
+      );
+      console.log(
+        '============== lendingPoolConfiguratorImplAddress: ',
+        lendingPoolConfiguratorImplAddress
       );
       const lendingPoolConfiguratorImpl = notFalsyOrZeroAddress(lendingPoolConfiguratorImplAddress)
         ? await getLendingPoolConfiguratorImpl(lendingPoolConfiguratorImplAddress)
@@ -76,16 +87,21 @@ task('verify:general', 'Verify contracts at Etherscan')
         LendingPoolCollateralManager,
         network
       );
+      console.log(
+        '============== lendingPoolCollateralManagerImplAddress: ',
+        lendingPoolCollateralManagerImplAddress
+      );
       const lendingPoolCollateralManagerImpl = notFalsyOrZeroAddress(
         lendingPoolCollateralManagerImplAddress
       )
         ? await getLendingPoolCollateralManagerImpl(lendingPoolCollateralManagerImplAddress)
         : await getLendingPoolCollateralManagerImpl();
 
-      const dataProvider = await getAaveProtocolDataProvider();
+      const dataProvider = await getViniumProtocolDataProvider();
       const walletProvider = await getWalletProvider();
 
       const wethGatewayAddress = getParamPerNetwork(WethGateway, network);
+      console.log('============== wethGatewayAddress: ', wethGatewayAddress);
       const wethGateway = notFalsyOrZeroAddress(wethGatewayAddress)
         ? await getWETHGateway(wethGatewayAddress)
         : await getWETHGateway();
@@ -119,8 +135,8 @@ task('verify:general', 'Verify contracts at Etherscan')
       );
 
       // Test helpers
-      console.log('\n- Verifying  Aave  Provider Helpers...\n');
-      await verifyContract(eContractid.AaveProtocolDataProvider, dataProvider, [
+      console.log('\n- Verifying  Vinium  Provider Helpers...\n');
+      await verifyContract(eContractid.ViniumProtocolDataProvider, dataProvider, [
         addressesProvider.address,
       ]);
 

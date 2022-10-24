@@ -37,11 +37,17 @@ abstract contract BaseParaSwapAdapter is FlashLoanReceiverBase, Ownable {
 
   IPriceOracleGetter public immutable ORACLE;
 
-  event Swapped(address indexed fromAsset, address indexed toAsset, uint256 fromAmount, uint256 receivedAmount);
+  event Swapped(
+    address indexed fromAsset,
+    address indexed toAsset,
+    uint256 fromAmount,
+    uint256 receivedAmount
+  );
 
-  constructor(
-    ILendingPoolAddressesProvider addressesProvider
-  ) public FlashLoanReceiverBase(addressesProvider) {
+  constructor(ILendingPoolAddressesProvider addressesProvider)
+    public
+    FlashLoanReceiverBase(addressesProvider)
+  {
     ORACLE = IPriceOracleGetter(addressesProvider.getPriceOracle());
   }
 
@@ -66,31 +72,31 @@ abstract contract BaseParaSwapAdapter is FlashLoanReceiverBase, Ownable {
   }
 
   /**
-   * @dev Get the aToken associated to the asset
-   * @return address of the aToken
+   * @dev Get the viToken associated to the asset
+   * @return address of the viToken
    */
   function _getReserveData(address asset) internal view returns (DataTypes.ReserveData memory) {
     return LENDING_POOL.getReserveData(asset);
   }
 
   /**
-   * @dev Pull the ATokens from the user
+   * @dev Pull the ViTokens from the user
    * @param reserve address of the asset
-   * @param reserveAToken address of the aToken of the reserve
+   * @param reserveViToken address of the viToken of the reserve
    * @param user address
    * @param amount of tokens to be transferred to the contract
    * @param permitSignature struct containing the permit signature
    */
-  function _pullATokenAndWithdraw(
+  function _pullViTokenAndWithdraw(
     address reserve,
-    IERC20WithPermit reserveAToken,
+    IERC20WithPermit reserveViToken,
     address user,
     uint256 amount,
     PermitSignature memory permitSignature
   ) internal {
     // If deadline is set to zero, assume there is no signature for permit
     if (permitSignature.deadline != 0) {
-      reserveAToken.permit(
+      reserveViToken.permit(
         user,
         address(this),
         permitSignature.amount,
@@ -102,7 +108,7 @@ abstract contract BaseParaSwapAdapter is FlashLoanReceiverBase, Ownable {
     }
 
     // transfer from user to adapter
-    reserveAToken.safeTransferFrom(user, address(this), amount);
+    reserveViToken.safeTransferFrom(user, address(this), amount);
 
     // withdraw reserve
     require(

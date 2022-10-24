@@ -1,14 +1,14 @@
 import { task } from 'hardhat/config';
 import { eEthereumNetwork } from '../../helpers/types';
 import { getTreasuryAddress } from '../../helpers/configuration';
-import * as marketConfigs from '../../markets/aave';
-import * as reserveConfigs from '../../markets/aave/reservesConfigs';
+import * as marketConfigs from '../../markets/avalanche';
+import * as reserveConfigs from '../../markets/avalanche/reservesConfigs';
 import { getLendingPoolAddressesProvider } from './../../helpers/contracts-getters';
 import {
-  chooseATokenDeployment,
+  chooseViTokenDeployment,
   deployDefaultReserveInterestRateStrategy,
-  deployStableDebtToken,
-  deployVariableDebtToken,
+  deployStableVdToken,
+  deployVariableVdToken,
 } from './../../helpers/contracts-deployments';
 import { setDRE } from '../../helpers/misc-utils';
 import { ZERO_ADDRESS } from './../../helpers/constants';
@@ -20,8 +20,8 @@ const LENDING_POOL_ADDRESS_PROVIDER = {
 
 const isSymbolValid = (symbol: string, network: eEthereumNetwork) =>
   Object.keys(reserveConfigs).includes('strategy' + symbol) &&
-  marketConfigs.AaveConfig.ReserveAssets[network][symbol] &&
-  marketConfigs.AaveConfig.ReservesConfig[symbol] === reserveConfigs['strategy' + symbol];
+  marketConfigs.ViniumConfig.ReserveAssets[network][symbol] &&
+  marketConfigs.ViniumConfig.ReservesConfig[symbol] === reserveConfigs['strategy' + symbol];
 
 task('external:deploy-new-asset', 'Deploy A token, Debt Tokens, Risk Parameters')
   .addParam('symbol', `Asset symbol, needs to have configuration ready`)
@@ -33,37 +33,37 @@ task('external:deploy-new-asset', 'Deploy A token, Debt Tokens, Risk Parameters'
         `
 WRONG RESERVE ASSET SETUP:
         The symbol ${symbol} has no reserve Config and/or reserve Asset setup.
-        update /markets/aave/index.ts and add the asset address for ${network} network
-        update /markets/aave/reservesConfigs.ts and add parameters for ${symbol}
+        update /markets/vinium/index.ts and add the asset address for ${network} network
+        update /markets/vinium/reservesConfigs.ts and add parameters for ${symbol}
         `
       );
     }
     setDRE(localBRE);
     const strategyParams = reserveConfigs['strategy' + symbol];
     const reserveAssetAddress =
-      marketConfigs.AaveConfig.ReserveAssets[localBRE.network.name][symbol];
-    const deployCustomAToken = chooseATokenDeployment(strategyParams.aTokenImpl);
+      marketConfigs.ViniumConfig.ReserveAssets[localBRE.network.name][symbol];
+    const deployCustomViToken = chooseViTokenDeployment(strategyParams.viTokenImpl);
     const addressProvider = await getLendingPoolAddressesProvider(
       LENDING_POOL_ADDRESS_PROVIDER[network]
     );
     const poolAddress = await addressProvider.getLendingPool();
-    const aToken = await deployCustomAToken(verify);
-    const stableDebt = await deployStableDebtToken(
+    const viToken = await deployCustomViToken(verify);
+    const stableDebt = await deployStableVdToken(
       [
         poolAddress,
         reserveAssetAddress,
         ZERO_ADDRESS, // Incentives Controller
-        `Aave stable debt bearing ${symbol}`,
+        `Vinium stable debt bearing ${symbol}`,
         `stableDebt${symbol}`,
       ],
       verify
     );
-    const variableDebt = await deployVariableDebtToken(
+    const variableDebt = await deployVariableVdToken(
       [
         poolAddress,
         reserveAssetAddress,
         ZERO_ADDRESS, // Incentives Controller
-        `Aave variable debt bearing ${symbol}`,
+        `Vinium variable debt bearing ${symbol}`,
         `variableDebt${symbol}`,
       ],
       verify
@@ -82,7 +82,7 @@ WRONG RESERVE ASSET SETUP:
     );
     console.log(`
     New interest bearing asset deployed on ${network}:
-    Interest bearing a${symbol} address: ${aToken.address}
+    Interest bearing a${symbol} address: ${viToken.address}
     Variable Debt variableDebt${symbol} address: ${variableDebt.address}
     Stable Debt stableDebt${symbol} address: ${stableDebt.address}
     Strategy Implementation for ${symbol} address: ${rates.address}

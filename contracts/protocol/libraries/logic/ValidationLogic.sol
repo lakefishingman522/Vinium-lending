@@ -18,7 +18,7 @@ import {DataTypes} from '../types/DataTypes.sol';
 
 /**
  * @title ReserveLogic library
- * @author Vini
+ * @author Vinium
  * @notice Implements functions to validate the different actions of the protocol
  */
 library ValidationLogic {
@@ -198,11 +198,11 @@ library ValidationLogic {
       require(
         !userConfig.isUsingAsCollateral(reserve.id) ||
           reserve.configuration.getLtv() == 0 ||
-          amount > IERC20(reserve.aTokenAddress).balanceOf(userAddress),
+          amount > IERC20(reserve.viTokenAddress).balanceOf(userAddress),
         Errors.VL_COLLATERAL_SAME_AS_BORROWING_CURRENCY
       );
 
-      vars.availableLiquidity = IERC20(asset).balanceOf(reserve.aTokenAddress);
+      vars.availableLiquidity = IERC20(asset).balanceOf(reserve.viTokenAddress);
 
       //calculate the max available loan size in stable rate mode as a percentage of the
       //available liquidity
@@ -284,7 +284,7 @@ library ValidationLogic {
       require(
         !userConfig.isUsingAsCollateral(reserve.id) ||
           reserve.configuration.getLtv() == 0 ||
-          stableDebt.add(variableDebt) > IERC20(reserve.aTokenAddress).balanceOf(msg.sender),
+          stableDebt.add(variableDebt) > IERC20(reserve.viTokenAddress).balanceOf(msg.sender),
         Errors.VL_COLLATERAL_SAME_AS_BORROWING_CURRENCY
       );
     } else {
@@ -296,27 +296,24 @@ library ValidationLogic {
    * @dev Validates a stable borrow rate rebalance action
    * @param reserve The reserve state on which the user is getting rebalanced
    * @param reserveAddress The address of the reserve
-   * @param stableDebtToken The stable debt token instance
-   * @param variableDebtToken The variable debt token instance
-   * @param aTokenAddress The address of the aToken contract
+   * @param stableVdToken The stable debt token instance
+   * @param variableVdToken The variable debt token instance
+   * @param viTokenAddress The address of the viToken contract
    */
   function validateRebalanceStableBorrowRate(
     DataTypes.ReserveData storage reserve,
     address reserveAddress,
-    IERC20 stableDebtToken,
-    IERC20 variableDebtToken,
-    address aTokenAddress
+    IERC20 stableVdToken,
+    IERC20 variableVdToken,
+    address viTokenAddress
   ) external view {
     (bool isActive, , , ) = reserve.configuration.getFlags();
 
     require(isActive, Errors.VL_NO_ACTIVE_RESERVE);
 
     //if the usage ratio is below 95%, no rebalances are needed
-    uint256 totalDebt = stableDebtToken
-      .totalSupply()
-      .add(variableDebtToken.totalSupply())
-      .wadToRay();
-    uint256 availableLiquidity = IERC20(reserveAddress).balanceOf(aTokenAddress).wadToRay();
+    uint256 totalDebt = stableVdToken.totalSupply().add(variableVdToken.totalSupply()).wadToRay();
+    uint256 availableLiquidity = IERC20(reserveAddress).balanceOf(viTokenAddress).wadToRay();
     uint256 usageRatio = totalDebt == 0 ? 0 : totalDebt.rayDiv(availableLiquidity.add(totalDebt));
 
     //if the liquidity rate is below REBALANCE_UP_THRESHOLD of the max variable APR at 95% usage,
@@ -354,7 +351,7 @@ library ValidationLogic {
     uint256 reservesCount,
     address oracle
   ) external view {
-    uint256 underlyingBalance = IERC20(reserve.aTokenAddress).balanceOf(msg.sender);
+    uint256 underlyingBalance = IERC20(reserve.viTokenAddress).balanceOf(msg.sender);
 
     require(underlyingBalance > 0, Errors.VL_UNDERLYING_BALANCE_NOT_GREATER_THAN_0);
 
@@ -438,8 +435,8 @@ library ValidationLogic {
   }
 
   /**
-   * @dev Validates an aToken transfer
-   * @param from The user from which the aTokens are being transferred
+   * @dev Validates an viToken transfer
+   * @param from The user from which the viTokens are being transferred
    * @param reservesData The state of all the reserves
    * @param userConfig The state of the user for the specific reserve
    * @param reserves The addresses of all the active reserves

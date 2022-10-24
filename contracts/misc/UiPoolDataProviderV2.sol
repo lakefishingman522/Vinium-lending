@@ -6,10 +6,10 @@ import {IERC20Detailed} from '../dependencies/openzeppelin/contracts/IERC20Detai
 import {ILendingPoolAddressesProvider} from '../interfaces/ILendingPoolAddressesProvider.sol';
 import {IUiPoolDataProviderV2} from './interfaces/IUiPoolDataProviderV2.sol';
 import {ILendingPool} from '../interfaces/ILendingPool.sol';
-import {IViniOracle} from './interfaces/IViniOracle.sol';
-import {IAToken} from '../interfaces/IAToken.sol';
-import {IVariableDebtToken} from '../interfaces/IVariableDebtToken.sol';
-import {IStableDebtToken} from '../interfaces/IStableDebtToken.sol';
+import {IViniumOracle} from './interfaces/IViniumOracle.sol';
+import {IViToken} from '../interfaces/IViToken.sol';
+import {IVariableVdToken} from '../interfaces/IVariableVdToken.sol';
+import {IStableVdToken} from '../interfaces/IStableVdToken.sol';
 import {WadRayMath} from '../protocol/libraries/math/WadRayMath.sol';
 import {ReserveConfiguration} from '../protocol/libraries/configuration/ReserveConfiguration.sol';
 import {UserConfiguration} from '../protocol/libraries/configuration/UserConfiguration.sol';
@@ -70,7 +70,7 @@ contract UiPoolDataProviderV2 is IUiPoolDataProviderV2 {
     override
     returns (AggregatedReserveData[] memory, BaseCurrencyInfo memory)
   {
-    IViniOracle oracle = IViniOracle(provider.getPriceOracle());
+    IViniumOracle oracle = IViniumOracle(provider.getPriceOracle());
     ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
     address[] memory reserves = lendingPool.getReservesList();
     AggregatedReserveData[] memory reservesData = new AggregatedReserveData[](reserves.length);
@@ -89,24 +89,24 @@ contract UiPoolDataProviderV2 is IUiPoolDataProviderV2 {
       reserveData.variableBorrowRate = baseData.currentVariableBorrowRate;
       reserveData.stableBorrowRate = baseData.currentStableBorrowRate;
       reserveData.lastUpdateTimestamp = baseData.lastUpdateTimestamp;
-      reserveData.aTokenAddress = baseData.aTokenAddress;
-      reserveData.stableDebtTokenAddress = baseData.stableDebtTokenAddress;
-      reserveData.variableDebtTokenAddress = baseData.variableDebtTokenAddress;
+      reserveData.viTokenAddress = baseData.viTokenAddress;
+      reserveData.stableVdTokenAddress = baseData.stableVdTokenAddress;
+      reserveData.variableVdTokenAddress = baseData.variableVdTokenAddress;
       reserveData.interestRateStrategyAddress = baseData.interestRateStrategyAddress;
       reserveData.priceInMarketReferenceCurrency = oracle.getAssetPrice(
         reserveData.underlyingAsset
       );
 
       reserveData.availableLiquidity = IERC20Detailed(reserveData.underlyingAsset).balanceOf(
-        reserveData.aTokenAddress
+        reserveData.viTokenAddress
       );
       (
         reserveData.totalPrincipalStableDebt,
         ,
         reserveData.averageStableRate,
         reserveData.stableDebtLastUpdateTimestamp
-      ) = IStableDebtToken(reserveData.stableDebtTokenAddress).getSupplyData();
-      reserveData.totalScaledVariableDebt = IVariableDebtToken(reserveData.variableDebtTokenAddress)
+      ) = IStableVdToken(reserveData.stableVdTokenAddress).getSupplyData();
+      reserveData.totalScaledVariableDebt = IVariableVdToken(reserveData.variableVdTokenAddress)
         .scaledTotalSupply();
 
       if (address(reserveData.underlyingAsset) == address(MKRAddress)) {
@@ -187,22 +187,21 @@ contract UiPoolDataProviderV2 is IUiPoolDataProviderV2 {
 
       // user reserve data
       userReservesData[i].underlyingAsset = reserves[i];
-      userReservesData[i].scaledATokenBalance = IAToken(baseData.aTokenAddress).scaledBalanceOf(
+      userReservesData[i].scaledViTokenBalance = IViToken(baseData.viTokenAddress).scaledBalanceOf(
         user
       );
       userReservesData[i].usageAsCollateralEnabledOnUser = userConfig.isUsingAsCollateral(i);
 
       if (userConfig.isBorrowing(i)) {
-        userReservesData[i].scaledVariableDebt = IVariableDebtToken(
-          baseData.variableDebtTokenAddress
-        ).scaledBalanceOf(user);
-        userReservesData[i].principalStableDebt = IStableDebtToken(baseData.stableDebtTokenAddress)
+        userReservesData[i].scaledVariableDebt = IVariableVdToken(baseData.variableVdTokenAddress)
+          .scaledBalanceOf(user);
+        userReservesData[i].principalStableDebt = IStableVdToken(baseData.stableVdTokenAddress)
           .principalBalanceOf(user);
         if (userReservesData[i].principalStableDebt != 0) {
-          userReservesData[i].stableBorrowRate = IStableDebtToken(baseData.stableDebtTokenAddress)
+          userReservesData[i].stableBorrowRate = IStableVdToken(baseData.stableVdTokenAddress)
             .getUserStableRate(user);
-          userReservesData[i].stableBorrowLastUpdateTimestamp = IStableDebtToken(
-            baseData.stableDebtTokenAddress
+          userReservesData[i].stableBorrowLastUpdateTimestamp = IStableVdToken(
+            baseData.stableVdTokenAddress
           ).getUserLastUpdated(user);
         }
       }

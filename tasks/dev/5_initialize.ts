@@ -3,7 +3,7 @@ import {
   deployLendingPoolCollateralManager,
   deployMockFlashLoanReceiver,
   deployWalletBalancerProvider,
-  deployAaveProtocolDataProvider,
+  deployViniumProtocolDataProvider,
   authorizeWETHGateway,
 } from '../../helpers/contracts-deployments';
 import { getParamPerNetwork } from '../../helpers/contracts-helpers';
@@ -15,7 +15,7 @@ import {
   loadPoolConfig,
 } from '../../helpers/configuration';
 
-import { tEthereumAddress, AavePools, eContractid } from '../../helpers/types';
+import { tEthereumAddress, ViniumPools, eContractid } from '../../helpers/types';
 import { waitForTx, filterMapBy, notFalsyOrZeroAddress } from '../../helpers/misc-utils';
 import { configureReservesByHelper, initReservesByHelper } from '../../helpers/init-helpers';
 import { getAllTokenAddresses } from '../../helpers/mock-helpers';
@@ -23,6 +23,7 @@ import { ZERO_ADDRESS } from '../../helpers/constants';
 import {
   getAllMockedTokens,
   getLendingPoolAddressesProvider,
+  getLendingPoolConfiguratorProxy,
   getWETHGateway,
 } from '../../helpers/contracts-getters';
 import { insertContractAddressInDb } from '../../helpers/contracts-helpers';
@@ -35,9 +36,9 @@ task('dev:initialize-lending-pool', 'Initialize lending pool configuration.')
     const network = <eNetwork>localBRE.network.name;
     const poolConfig = loadPoolConfig(pool);
     const {
-      ATokenNamePrefix,
-      StableDebtTokenNamePrefix,
-      VariableDebtTokenNamePrefix,
+      ViTokenNamePrefix,
+      StableVdTokenNamePrefix,
+      VariableVdTokenNamePrefix,
       SymbolPrefix,
       WethGateway,
       ReservesConfig,
@@ -51,7 +52,8 @@ task('dev:initialize-lending-pool', 'Initialize lending pool configuration.')
       filterMapBy(allTokenAddresses, (key: string) => !key.includes('UNI_'))
     );
 
-    const testHelpers = await deployAaveProtocolDataProvider(addressesProvider.address, verify);
+    const testHelpers = await deployViniumProtocolDataProvider(addressesProvider.address, verify);
+    await insertContractAddressInDb(eContractid.ViniumProtocolDataProvider, testHelpers.address);
 
     const admin = await addressesProvider.getPoolAdmin();
 
@@ -60,9 +62,9 @@ task('dev:initialize-lending-pool', 'Initialize lending pool configuration.')
     await initReservesByHelper(
       ReservesConfig,
       protoPoolReservesAddresses,
-      ATokenNamePrefix,
-      StableDebtTokenNamePrefix,
-      VariableDebtTokenNamePrefix,
+      ViTokenNamePrefix,
+      StableVdTokenNamePrefix,
+      VariableVdTokenNamePrefix,
       SymbolPrefix,
       admin,
       treasuryAddress,
@@ -88,8 +90,6 @@ task('dev:initialize-lending-pool', 'Initialize lending pool configuration.')
 
     await deployWalletBalancerProvider(verify);
 
-    await insertContractAddressInDb(eContractid.AaveProtocolDataProvider, testHelpers.address);
-
     const lendingPoolAddress = await addressesProvider.getLendingPool();
 
     let gateway = getParamPerNetwork(WethGateway, network);
@@ -97,4 +97,7 @@ task('dev:initialize-lending-pool', 'Initialize lending pool configuration.')
       gateway = (await getWETHGateway()).address;
     }
     await authorizeWETHGateway(gateway, lendingPoolAddress);
+
+    const poolConfigurator = await getLendingPoolConfiguratorProxy();
+    await waitForTx(await poolConfigurator.setPoolPause(false));
   });

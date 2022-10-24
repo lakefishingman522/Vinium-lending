@@ -1,8 +1,8 @@
 import { task } from 'hardhat/config';
 import { getParamPerNetwork, insertContractAddressInDb } from '../../helpers/contracts-helpers';
 import {
-  deployATokenImplementations,
-  deployATokensAndRatesHelper,
+  deployViTokenImplementations,
+  deployViTokensAndRatesHelper,
   deployLendingPool,
   deployLendingPoolConfigurator,
   deployStableAndVariableTokensHelper,
@@ -36,61 +36,59 @@ task('full:deploy-lending-pool', 'Deploy lending pool for dev enviroment')
 
       // Reuse/deploy lending pool implementation
       let lendingPoolImplAddress = getParamPerNetwork(LendingPool, network);
-      console.log('lendingPoolImplAddress' + lendingPoolImplAddress);
       if (!notFalsyOrZeroAddress(lendingPoolImplAddress)) {
         console.log('\tDeploying new lending pool implementation & libraries...');
-        // const lendingPoolImpl = await deployLendingPool(verify);
-        // lendingPoolImplAddress = lendingPoolImpl.address;
-        // await lendingPoolImpl.initialize(addressesProvider.address);
+        const lendingPoolImpl = await deployLendingPool(verify);
+        lendingPoolImplAddress = lendingPoolImpl.address;
+        await lendingPoolImpl.initialize(addressesProvider.address);
       }
       console.log('\tSetting lending pool implementation with address:', lendingPoolImplAddress);
       // Set lending pool impl to Address provider
-      // await waitForTx(await addressesProvider.setLendingPoolImpl(lendingPoolImplAddress));
+      await waitForTx(await addressesProvider.setLendingPoolImpl(lendingPoolImplAddress));
 
       const address = await addressesProvider.getLendingPool();
       const lendingPoolProxy = await getLendingPool(address);
 
-      // await insertContractAddressInDb(eContractid.LendingPool, lendingPoolProxy.address);
+      await insertContractAddressInDb(eContractid.LendingPool, lendingPoolProxy.address);
 
       // Reuse/deploy lending pool configurator
       let lendingPoolConfiguratorImplAddress = getParamPerNetwork(LendingPoolConfigurator, network); //await deployLendingPoolConfigurator(verify);
       if (!notFalsyOrZeroAddress(lendingPoolConfiguratorImplAddress)) {
         console.log('\tDeploying new configurator implementation...');
-        // const lendingPoolConfiguratorImpl = await deployLendingPoolConfigurator(verify);
-        // lendingPoolConfiguratorImplAddress = lendingPoolConfiguratorImpl.address;
+        const lendingPoolConfiguratorImpl = await deployLendingPoolConfigurator(verify);
+        lendingPoolConfiguratorImplAddress = lendingPoolConfiguratorImpl.address;
       }
       console.log(
         '\tSetting lending pool configurator implementation with address:',
         lendingPoolConfiguratorImplAddress
       );
       // Set lending pool conf impl to Address Provider
-      // await waitForTx(
-      //   await addressesProvider.setLendingPoolConfiguratorImpl(lendingPoolConfiguratorImplAddress)
-      // );
+      await waitForTx(
+        await addressesProvider.setLendingPoolConfiguratorImpl(lendingPoolConfiguratorImplAddress)
+      );
 
       const lendingPoolConfiguratorProxy = await getLendingPoolConfiguratorProxy(
         await addressesProvider.getLendingPoolConfigurator()
       );
-      console.log(lendingPoolConfiguratorProxy);
 
-      // await insertContractAddressInDb(
-      //   eContractid.LendingPoolConfigurator,
-      //   lendingPoolConfiguratorProxy.address
-      // );
+      await insertContractAddressInDb(
+        eContractid.LendingPoolConfigurator,
+        lendingPoolConfiguratorProxy.address
+      );
       const admin = await DRE.ethers.getSigner(await getEmergencyAdmin(poolConfig));
       // Pause market during deployment
-      await waitForTx(await lendingPoolConfiguratorProxy.connect(admin).setPoolPause(false));
+      await waitForTx(await lendingPoolConfiguratorProxy.connect(admin).setPoolPause(true));
 
-      // // Deploy deployment helpers
-      // await deployStableAndVariableTokensHelper(
-      //   [lendingPoolProxy.address, addressesProvider.address],
-      //   verify
-      // );
-      // await deployATokensAndRatesHelper(
-      //   [lendingPoolProxy.address, addressesProvider.address, lendingPoolConfiguratorProxy.address],
-      //   verify
-      // );
-      // await deployATokenImplementations(pool, poolConfig.ReservesConfig, verify);
+      // Deploy deployment helpers
+      await deployStableAndVariableTokensHelper(
+        [lendingPoolProxy.address, addressesProvider.address],
+        verify
+      );
+      await deployViTokensAndRatesHelper(
+        [lendingPoolProxy.address, addressesProvider.address, lendingPoolConfiguratorProxy.address],
+        verify
+      );
+      await deployViTokenImplementations(pool, poolConfig.ReservesConfig, verify);
     } catch (error) {
       if (DRE.network.name.includes('tenderly')) {
         const transactionLink = `https://dashboard.tenderly.co/${DRE.config.tenderly.username}/${

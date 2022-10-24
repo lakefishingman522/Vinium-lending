@@ -1,9 +1,8 @@
-// @ts-nocheck
 import {
-  AaveProtocolDataProviderFactory,
-  ATokenFactory,
-  ATokensAndRatesHelperFactory,
-  AaveOracleFactory,
+  ViniumProtocolDataProviderFactory,
+  ViTokenFactory,
+  ViTokensAndRatesHelperFactory,
+  ViniumOracleFactory,
   DefaultReserveInterestRateStrategyFactory,
   GenericLogicFactory,
   InitializableAdminUpgradeabilityProxyFactory,
@@ -14,10 +13,10 @@ import {
   LendingPoolFactory,
   LendingRateOracleFactory,
   MintableERC20Factory,
-  MockATokenFactory,
+  MockViTokenFactory,
   MockFlashLoanReceiverFactory,
-  MockStableDebtTokenFactory,
-  MockVariableDebtTokenFactory,
+  MockStableVdTokenFactory,
+  MockVariableVdTokenFactory,
   MockUniswapV2Router02Factory,
   MockParaSwapAugustusFactory,
   MockParaSwapAugustusRegistryFactory,
@@ -26,10 +25,10 @@ import {
   ReserveLogicFactory,
   SelfdestructTransferFactory,
   StableAndVariableTokensHelperFactory,
-  StableDebtTokenFactory,
+  StableVdTokenFactory,
   UniswapLiquiditySwapAdapterFactory,
   UniswapRepayAdapterFactory,
-  VariableDebtTokenFactory,
+  VariableVdTokenFactory,
   WalletBalanceProviderFactory,
   WETH9MockedFactory,
   WETHGatewayFactory,
@@ -79,26 +78,26 @@ export const getPriceOracle = async (address?: tEthereumAddress) =>
     await getFirstSigner()
   );
 
-export const getAToken = async (address?: tEthereumAddress) =>
-  await ATokenFactory.connect(
-    address || (await getDb().get(`${eContractid.AToken}.${DRE.network.name}`).value()).address,
+export const getViToken = async (address?: tEthereumAddress) =>
+  await ViTokenFactory.connect(
+    address || (await getDb().get(`${eContractid.ViToken}.${DRE.network.name}`).value()).address,
     await getFirstSigner()
   );
 
-export const getStableDebtToken = async (address?: tEthereumAddress) =>
-  await StableDebtTokenFactory.connect(
+export const getStableVdToken = async (address?: tEthereumAddress) =>
+  await StableVdTokenFactory.connect(
     address ||
       (
-        await getDb().get(`${eContractid.StableDebtToken}.${DRE.network.name}`).value()
+        await getDb().get(`${eContractid.StableVdToken}.${DRE.network.name}`).value()
       ).address,
     await getFirstSigner()
   );
 
-export const getVariableDebtToken = async (address?: tEthereumAddress) =>
-  await VariableDebtTokenFactory.connect(
+export const getVariableVdToken = async (address?: tEthereumAddress) =>
+  await VariableVdTokenFactory.connect(
     address ||
       (
-        await getDb().get(`${eContractid.VariableDebtToken}.${DRE.network.name}`).value()
+        await getDb().get(`${eContractid.VariableVdToken}.${DRE.network.name}`).value()
       ).address,
     await getFirstSigner()
   );
@@ -121,11 +120,11 @@ export const getIErc20Detailed = async (address: tEthereumAddress) =>
     await getFirstSigner()
   );
 
-export const getAaveProtocolDataProvider = async (address?: tEthereumAddress) =>
-  await AaveProtocolDataProviderFactory.connect(
+export const getViniumProtocolDataProvider = async (address?: tEthereumAddress) =>
+  await ViniumProtocolDataProviderFactory.connect(
     address ||
       (
-        await getDb().get(`${eContractid.AaveProtocolDataProvider}.${DRE.network.name}`).value()
+        await getDb().get(`${eContractid.ViniumProtocolDataProvider}.${DRE.network.name}`).value()
       ).address,
     await getFirstSigner()
   );
@@ -211,23 +210,22 @@ export const getPairsTokenAggregator = (
     getQuoteCurrencies(oracleQuoteCurrency)
   );
 
-  const pairs = Object.entries(assetsWithoutQuoteCurrency)
-    .map(([tokenSymbol, tokenAddress]) => {
-      //if (true/*tokenSymbol !== 'WETH' && tokenSymbol !== 'ETH' && tokenSymbol !== 'LpWETH'*/) {
+  const pairs = Object.entries(assetsWithoutQuoteCurrency).reduce<[string, string][]>(
+    (acc, [tokenSymbol, tokenAddress]) => {
       const aggregatorAddressIndex = Object.keys(aggregatorsAddresses).findIndex(
         (value) => value === tokenSymbol
       );
-
-      if (aggregatorAddressIndex > -1) {
+      if (aggregatorAddressIndex >= 0) {
         const [, aggregatorAddress] = (
           Object.entries(aggregatorsAddresses) as [string, tEthereumAddress][]
         )[aggregatorAddressIndex];
-        return [tokenAddress, aggregatorAddress];
+        return [...acc, [tokenAddress, aggregatorAddress]];
       }
-      //}
-    })
-    .filter((item) => item !== undefined) as [string, string][];
-  // console.log(pairs)
+      return acc;
+    },
+    []
+  );
+
   const mappedPairs = pairs.map(([asset]) => asset);
   const mappedAggregators = pairs.map(([, source]) => source);
 
@@ -275,11 +273,11 @@ export const getStableAndVariableTokensHelper = async (address?: tEthereumAddres
     await getFirstSigner()
   );
 
-export const getATokensAndRatesHelper = async (address?: tEthereumAddress) =>
-  await ATokensAndRatesHelperFactory.connect(
+export const getViTokensAndRatesHelper = async (address?: tEthereumAddress) =>
+  await ViTokensAndRatesHelperFactory.connect(
     address ||
       (
-        await getDb().get(`${eContractid.ATokensAndRatesHelper}.${DRE.network.name}`).value()
+        await getDb().get(`${eContractid.ViTokensAndRatesHelper}.${DRE.network.name}`).value()
       ).address,
     await getFirstSigner()
   );
@@ -299,26 +297,29 @@ export const getWETHMocked = async (address?: tEthereumAddress) =>
     await getFirstSigner()
   );
 
-export const getMockAToken = async (address?: tEthereumAddress) =>
-  await MockATokenFactory.connect(
-    address || (await getDb().get(`${eContractid.MockAToken}.${DRE.network.name}`).value()).address,
-    await getFirstSigner()
-  );
-
-export const getMockVariableDebtToken = async (address?: tEthereumAddress) =>
-  await MockVariableDebtTokenFactory.connect(
+export const getMockViToken = async (address?: tEthereumAddress) =>
+  await MockViTokenFactory.connect(
     address ||
       (
-        await getDb().get(`${eContractid.MockVariableDebtToken}.${DRE.network.name}`).value()
+        await getDb().get(`${eContractid.MockViToken}.${DRE.network.name}`).value()
       ).address,
     await getFirstSigner()
   );
 
-export const getMockStableDebtToken = async (address?: tEthereumAddress) =>
-  await MockStableDebtTokenFactory.connect(
+export const getMockVariableVdToken = async (address?: tEthereumAddress) =>
+  await MockVariableVdTokenFactory.connect(
     address ||
       (
-        await getDb().get(`${eContractid.MockStableDebtToken}.${DRE.network.name}`).value()
+        await getDb().get(`${eContractid.MockVariableVdToken}.${DRE.network.name}`).value()
+      ).address,
+    await getFirstSigner()
+  );
+
+export const getMockStableVdToken = async (address?: tEthereumAddress) =>
+  await MockStableVdTokenFactory.connect(
+    address ||
+      (
+        await getDb().get(`${eContractid.MockStableVdToken}.${DRE.network.name}`).value()
       ).address,
     await getFirstSigner()
   );
@@ -385,9 +386,12 @@ export const getLendingPoolCollateralManager = async (address?: tEthereumAddress
 export const getAddressById = async (id: string): Promise<tEthereumAddress | undefined> =>
   (await getDb().get(`${id}.${DRE.network.name}`).value())?.address || undefined;
 
-export const getAaveOracle = async (address?: tEthereumAddress) =>
-  await AaveOracleFactory.connect(
-    address || (await getDb().get(`${eContractid.AaveOracle}.${DRE.network.name}`).value()).address,
+export const getViniumOracle = async (address?: tEthereumAddress) =>
+  await ViniumOracleFactory.connect(
+    address ||
+      (
+        await getDb().get(`${eContractid.ViniumOracle}.${DRE.network.name}`).value()
+      ).address,
     await getFirstSigner()
   );
 

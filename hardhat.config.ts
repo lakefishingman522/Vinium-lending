@@ -21,8 +21,9 @@ import {
 require('dotenv').config();
 
 import '@nomiclabs/hardhat-ethers';
+import '@nomiclabs/hardhat-etherscan';
 import '@nomiclabs/hardhat-waffle';
-import 'temp-hardhat-etherscan';
+// import 'temp-hardhat-etherscan';
 import 'hardhat-gas-reporter';
 import 'hardhat-typechain';
 import '@tenderly/hardhat-tenderly';

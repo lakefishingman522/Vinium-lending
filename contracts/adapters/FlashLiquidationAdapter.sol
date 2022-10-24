@@ -9,13 +9,13 @@ import {IERC20} from '../dependencies/openzeppelin/contracts/IERC20.sol';
 import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
 import {Helpers} from '../protocol/libraries/helpers/Helpers.sol';
 import {IPriceOracleGetter} from '../interfaces/IPriceOracleGetter.sol';
-import {IAToken} from '../interfaces/IAToken.sol';
+import {IViToken} from '../interfaces/IViToken.sol';
 import {ReserveConfiguration} from '../protocol/libraries/configuration/ReserveConfiguration.sol';
 
 /**
  * @title UniswapLiquiditySwapAdapter
  * @notice Uniswap V2 Adapter to swap liquidity.
- * @author Vini
+ * @author Vinium
  **/
 contract FlashLiquidationAdapter is BaseUniswapAdapter {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;

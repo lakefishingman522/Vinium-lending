@@ -13,7 +13,7 @@ import { notFalsyOrZeroAddress, waitForTx } from '../../helpers/misc-utils';
 import { initReservesByHelper, configureReservesByHelper } from '../../helpers/init-helpers';
 import { exit } from 'process';
 import {
-  getAaveProtocolDataProvider,
+  getViniumProtocolDataProvider,
   getLendingPoolAddressesProvider,
 } from '../../helpers/contracts-getters';
 import { chainlinkAggregatorProxy, chainlinkEthUsdAggregatorProxy } from '../../helpers/constants';
@@ -27,9 +27,9 @@ task('full:initialize-lending-pool', 'Initialize lending pool configuration.')
       const network = <eNetwork>localBRE.network.name;
       const poolConfig = loadPoolConfig(pool);
       const {
-        ATokenNamePrefix,
-        StableDebtTokenNamePrefix,
-        VariableDebtTokenNamePrefix,
+        ViTokenNamePrefix,
+        StableVdTokenNamePrefix,
+        VariableVdTokenNamePrefix,
         SymbolPrefix,
         ReserveAssets,
         ReservesConfig,
@@ -42,25 +42,23 @@ task('full:initialize-lending-pool', 'Initialize lending pool configuration.')
       const incentivesController = await getParamPerNetwork(IncentivesController, network);
       const addressesProvider = await getLendingPoolAddressesProvider();
 
-      const testHelpers = await getAaveProtocolDataProvider();
+      const testHelpers = await getViniumProtocolDataProvider();
 
       const admin = await addressesProvider.getPoolAdmin();
-      console.log('admin ==' + admin);
       const oracle = await addressesProvider.getPriceOracle();
-      console.log('oracle ==' + oracle);
 
       if (!reserveAssets) {
         throw 'Reserve assets is undefined. Check ReserveAssets configuration at config directory';
       }
 
       const treasuryAddress = await getTreasuryAddress(poolConfig);
-      console.log('treasuryAddress ==' + treasuryAddress);
+
       await initReservesByHelper(
         ReservesConfig,
         reserveAssets,
-        ATokenNamePrefix,
-        StableDebtTokenNamePrefix,
-        VariableDebtTokenNamePrefix,
+        ViTokenNamePrefix,
+        StableVdTokenNamePrefix,
+        VariableVdTokenNamePrefix,
         SymbolPrefix,
         admin,
         treasuryAddress,
@@ -74,13 +72,12 @@ task('full:initialize-lending-pool', 'Initialize lending pool configuration.')
         LendingPoolCollateralManager,
         network
       );
-
-      console.log('collateralManagerAddress ==' + collateralManagerAddress);
       if (!notFalsyOrZeroAddress(collateralManagerAddress)) {
         const collateralManager = await deployLendingPoolCollateralManager(verify);
         collateralManagerAddress = collateralManager.address;
       }
       // Seems unnecessary to register the collateral manager in the JSON db
+
       console.log(
         '\tSetting lending pool collateral manager implementation with address',
         collateralManagerAddress
@@ -90,38 +87,26 @@ task('full:initialize-lending-pool', 'Initialize lending pool configuration.')
       );
 
       console.log(
-        '\tSetting AaveProtocolDataProvider at AddressesProvider at id: 0x01',
+        '\tSetting ViniumProtocolDataProvider at AddressesProvider at id: 0x01',
         collateralManagerAddress
       );
-      const aaveProtocolDataProvider = await getAaveProtocolDataProvider();
+      const viniumProtocolDataProvider = await getViniumProtocolDataProvider();
       await waitForTx(
         await addressesProvider.setAddress(
           '0x0100000000000000000000000000000000000000000000000000000000000000',
-          aaveProtocolDataProvider.address
+          viniumProtocolDataProvider.address
         )
       );
 
       await deployWalletBalancerProvider(verify);
 
-      console.log(localBRE.network.name);
-      console.log(chainlinkAggregatorProxy[localBRE.network.name]);
-      console.log(chainlinkEthUsdAggregatorProxy[localBRE.network.name]);
-
-      const uiPoolDataProvider = await deployUiPoolDataProviderV2(
-        chainlinkAggregatorProxy[localBRE.network.name],
-        chainlinkEthUsdAggregatorProxy[localBRE.network.name],
-        verify
-      );
-      console.log('UiPoolDataProvider deployed at:', uiPoolDataProvider.address);
-
       const lendingPoolAddress = await addressesProvider.getLendingPool();
-      console.log('lendingPoolAddress ==' + lendingPoolAddress);
+
       let gateWay = getParamPerNetwork(WethGateway, network);
       if (!notFalsyOrZeroAddress(gateWay)) {
         gateWay = (await getWETHGateway()).address;
       }
-      console.log('GATEWAY', gateWay);
-      // await authorizeWETHGateway(gateWay, lendingPoolAddress);
+      await authorizeWETHGateway(gateWay, lendingPoolAddress);
     } catch (err) {
       console.error(err);
       exit(1);

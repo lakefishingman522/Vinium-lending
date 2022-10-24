@@ -6,8 +6,8 @@ import {ILendingPool} from '../../interfaces/ILendingPool.sol';
 
 /**
  * @title IFlashLoanReceiver interface
- * @notice Interface for the Vini fee IFlashLoanReceiver.
- * @author Vini
+ * @notice Interface for the Vinium fee IFlashLoanReceiver.
+ * @author Vinium
  * @dev implement this interface to develop a flashloan-compatible flashLoanReceiver contract
  **/
 interface IFlashLoanReceiver {

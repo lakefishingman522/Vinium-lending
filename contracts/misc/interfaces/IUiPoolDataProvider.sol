@@ -3,7 +3,7 @@ pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
 import {ILendingPoolAddressesProvider} from '../../interfaces/ILendingPoolAddressesProvider.sol';
-import {IViniIncentivesController} from '../../interfaces/IViniIncentivesController.sol';
+import {IViniumIncentivesController} from '../../interfaces/IViniumIncentivesController.sol';
 
 interface IUiPoolDataProvider {
   struct AggregatedReserveData {
@@ -27,9 +27,9 @@ interface IUiPoolDataProvider {
     uint128 variableBorrowRate;
     uint128 stableBorrowRate;
     uint40 lastUpdateTimestamp;
-    address aTokenAddress;
-    address stableDebtTokenAddress;
-    address variableDebtTokenAddress;
+    address viTokenAddress;
+    address stableVdTokenAddress;
+    address variableVdTokenAddress;
     address interestRateStrategyAddress;
     //
     uint256 availableLiquidity;
@@ -49,21 +49,21 @@ interface IUiPoolDataProvider {
     uint256 aIncentivesLastUpdateTimestamp;
     uint256 vIncentivesLastUpdateTimestamp;
     uint256 sIncentivesLastUpdateTimestamp;
-    uint256 aTokenIncentivesIndex;
+    uint256 viTokenIncentivesIndex;
     uint256 vTokenIncentivesIndex;
     uint256 sTokenIncentivesIndex;
   }
 
   struct UserReserveData {
     address underlyingAsset;
-    uint256 scaledATokenBalance;
+    uint256 scaledViTokenBalance;
     bool usageAsCollateralEnabledOnUser;
     uint256 stableBorrowRate;
     uint256 scaledVariableDebt;
     uint256 principalStableDebt;
     uint256 stableBorrowLastUpdateTimestamp;
     // incentives
-    uint256 aTokenincentivesUserIndex;
+    uint256 viTokenincentivesUserIndex;
     uint256 vTokenincentivesUserIndex;
     uint256 sTokenincentivesUserIndex;
   }
@@ -78,7 +78,7 @@ interface IUiPoolDataProvider {
     view
     returns (address[] memory);
 
-  function incentivesController() external view returns (IViniIncentivesController);
+  function incentivesController() external view returns (IViniumIncentivesController);
 
   function getSimpleReservesData(ILendingPoolAddressesProvider provider)
     external

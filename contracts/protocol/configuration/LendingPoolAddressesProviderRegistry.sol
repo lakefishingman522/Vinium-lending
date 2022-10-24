@@ -7,11 +7,11 @@ import {Errors} from '../libraries/helpers/Errors.sol';
 
 /**
  * @title LendingPoolAddressesProviderRegistry contract
- * @dev Main registry of LendingPoolAddressesProvider of multiple Vini protocol's markets
- * - Used for indexing purposes of Vini protocol's markets
+ * @dev Main registry of LendingPoolAddressesProvider of multiple Vinium protocol's markets
+ * - Used for indexing purposes of Vinium protocol's markets
  * - The id assigned to a LendingPoolAddressesProvider refers to the market it is connected with,
- *   for example with `0` for the Vini main market and `1` for the next created
- * @author Vini
+ *   for example with `0` for the Vinium main market and `1` for the next created
+ * @author Vinium
  **/
 contract LendingPoolAddressesProviderRegistry is Ownable, ILendingPoolAddressesProviderRegistry {
   mapping(address => uint256) private _addressesProviders;

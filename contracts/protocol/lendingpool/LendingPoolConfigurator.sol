@@ -3,8 +3,8 @@ pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
 import {SafeMath} from '../../dependencies/openzeppelin/contracts/SafeMath.sol';
-import {VersionedInitializable} from '../libraries/vini-upgradeability/VersionedInitializable.sol';
-import {InitializableImmutableAdminUpgradeabilityProxy} from '../libraries/vini-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol';
+import {VersionedInitializable} from '../libraries/vinium-upgradeability/VersionedInitializable.sol';
+import {InitializableImmutableAdminUpgradeabilityProxy} from '../libraries/vinium-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol';
 import {ReserveConfiguration} from '../libraries/configuration/ReserveConfiguration.sol';
 import {ILendingPoolAddressesProvider} from '../../interfaces/ILendingPoolAddressesProvider.sol';
 import {ILendingPool} from '../../interfaces/ILendingPool.sol';
@@ -12,15 +12,15 @@ import {IERC20Detailed} from '../../dependencies/openzeppelin/contracts/IERC20De
 import {Errors} from '../libraries/helpers/Errors.sol';
 import {PercentageMath} from '../libraries/math/PercentageMath.sol';
 import {DataTypes} from '../libraries/types/DataTypes.sol';
-import {IInitializableDebtToken} from '../../interfaces/IInitializableDebtToken.sol';
-import {IInitializableAToken} from '../../interfaces/IInitializableAToken.sol';
-import {IViniIncentivesController} from '../../interfaces/IViniIncentivesController.sol';
+import {IInitializableVdToken} from '../../interfaces/IInitializableVdToken.sol';
+import {IInitializableViToken} from '../../interfaces/IInitializableViToken.sol';
+import {IViniumIncentivesController} from '../../interfaces/IViniumIncentivesController.sol';
 import {ILendingPoolConfigurator} from '../../interfaces/ILendingPoolConfigurator.sol';
 
 /**
  * @title LendingPoolConfigurator contract
- * @author Vini
- * @dev Implements the configuration methods for the Vini protocol
+ * @author Vinium
+ * @dev Implements the configuration methods for the Vinium protocol
  **/
 
 contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigurator {
@@ -66,54 +66,54 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
   }
 
   function _initReserve(ILendingPool pool, InitReserveInput calldata input) internal {
-    address aTokenProxyAddress = _initTokenWithProxy(
-      input.aTokenImpl,
+    address viTokenProxyAddress = _initTokenWithProxy(
+      input.viTokenImpl,
       abi.encodeWithSelector(
-        IInitializableAToken.initialize.selector,
+        IInitializableViToken.initialize.selector,
         pool,
         input.treasury,
         input.underlyingAsset,
-        IViniIncentivesController(input.incentivesController),
+        IViniumIncentivesController(input.incentivesController),
         input.underlyingAssetDecimals,
-        input.aTokenName,
-        input.aTokenSymbol,
+        input.viTokenName,
+        input.viTokenSymbol,
         input.params
       )
     );
 
-    address stableDebtTokenProxyAddress = _initTokenWithProxy(
-      input.stableDebtTokenImpl,
+    address stableVdTokenProxyAddress = _initTokenWithProxy(
+      input.stableVdTokenImpl,
       abi.encodeWithSelector(
-        IInitializableDebtToken.initialize.selector,
+        IInitializableVdToken.initialize.selector,
         pool,
         input.underlyingAsset,
-        IViniIncentivesController(input.incentivesController),
+        IViniumIncentivesController(input.incentivesController),
         input.underlyingAssetDecimals,
-        input.stableDebtTokenName,
-        input.stableDebtTokenSymbol,
+        input.stableVdTokenName,
+        input.stableVdTokenSymbol,
         input.params
       )
     );
 
-    address variableDebtTokenProxyAddress = _initTokenWithProxy(
-      input.variableDebtTokenImpl,
+    address variableVdTokenProxyAddress = _initTokenWithProxy(
+      input.variableVdTokenImpl,
       abi.encodeWithSelector(
-        IInitializableDebtToken.initialize.selector,
+        IInitializableVdToken.initialize.selector,
         pool,
         input.underlyingAsset,
-        IViniIncentivesController(input.incentivesController),
+        IViniumIncentivesController(input.incentivesController),
         input.underlyingAssetDecimals,
-        input.variableDebtTokenName,
-        input.variableDebtTokenSymbol,
+        input.variableVdTokenName,
+        input.variableVdTokenSymbol,
         input.params
       )
     );
 
     pool.initReserve(
       input.underlyingAsset,
-      aTokenProxyAddress,
-      stableDebtTokenProxyAddress,
-      variableDebtTokenProxyAddress,
+      viTokenProxyAddress,
+      stableVdTokenProxyAddress,
+      variableVdTokenProxyAddress,
       input.interestRateStrategyAddress
     );
 
@@ -130,17 +130,17 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
 
     emit ReserveInitialized(
       input.underlyingAsset,
-      aTokenProxyAddress,
-      stableDebtTokenProxyAddress,
-      variableDebtTokenProxyAddress,
+      viTokenProxyAddress,
+      stableVdTokenProxyAddress,
+      variableVdTokenProxyAddress,
       input.interestRateStrategyAddress
     );
   }
 
   /**
-   * @dev Updates the aToken implementation for the reserve
+   * @dev Updates the viToken implementation for the reserve
    **/
-  function updateAToken(UpdateATokenInput calldata input) external onlyPoolAdmin {
+  function updateViToken(UpdateViTokenInput calldata input) external onlyPoolAdmin {
     ILendingPool cachedPool = pool;
 
     DataTypes.ReserveData memory reserveData = cachedPool.getReserveData(input.asset);
@@ -148,7 +148,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     (, , , uint256 decimals, ) = cachedPool.getConfiguration(input.asset).getParamsMemory();
 
     bytes memory encodedCall = abi.encodeWithSelector(
-      IInitializableAToken.initialize.selector,
+      IInitializableViToken.initialize.selector,
       cachedPool,
       input.treasury,
       input.asset,
@@ -159,15 +159,15 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
       input.params
     );
 
-    _upgradeTokenImplementation(reserveData.aTokenAddress, input.implementation, encodedCall);
+    _upgradeTokenImplementation(reserveData.viTokenAddress, input.implementation, encodedCall);
 
-    emit ATokenUpgraded(input.asset, reserveData.aTokenAddress, input.implementation);
+    emit ViTokenUpgraded(input.asset, reserveData.viTokenAddress, input.implementation);
   }
 
   /**
    * @dev Updates the stable debt token implementation for the reserve
    **/
-  function updateStableDebtToken(UpdateDebtTokenInput calldata input) external onlyPoolAdmin {
+  function updateStableVdToken(UpdateVdTokenInput calldata input) external onlyPoolAdmin {
     ILendingPool cachedPool = pool;
 
     DataTypes.ReserveData memory reserveData = cachedPool.getReserveData(input.asset);
@@ -175,7 +175,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     (, , , uint256 decimals, ) = cachedPool.getConfiguration(input.asset).getParamsMemory();
 
     bytes memory encodedCall = abi.encodeWithSelector(
-      IInitializableDebtToken.initialize.selector,
+      IInitializableVdToken.initialize.selector,
       cachedPool,
       input.asset,
       input.incentivesController,
@@ -186,22 +186,18 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     );
 
     _upgradeTokenImplementation(
-      reserveData.stableDebtTokenAddress,
+      reserveData.stableVdTokenAddress,
       input.implementation,
       encodedCall
     );
 
-    emit StableDebtTokenUpgraded(
-      input.asset,
-      reserveData.stableDebtTokenAddress,
-      input.implementation
-    );
+    emit StableVdTokenUpgraded(input.asset, reserveData.stableVdTokenAddress, input.implementation);
   }
 
   /**
    * @dev Updates the variable debt token implementation for the asset
    **/
-  function updateVariableDebtToken(UpdateDebtTokenInput calldata input) external onlyPoolAdmin {
+  function updateVariableVdToken(UpdateVdTokenInput calldata input) external onlyPoolAdmin {
     ILendingPool cachedPool = pool;
 
     DataTypes.ReserveData memory reserveData = cachedPool.getReserveData(input.asset);
@@ -209,7 +205,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     (, , , uint256 decimals, ) = cachedPool.getConfiguration(input.asset).getParamsMemory();
 
     bytes memory encodedCall = abi.encodeWithSelector(
-      IInitializableDebtToken.initialize.selector,
+      IInitializableVdToken.initialize.selector,
       cachedPool,
       input.asset,
       input.incentivesController,
@@ -220,14 +216,14 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     );
 
     _upgradeTokenImplementation(
-      reserveData.variableDebtTokenAddress,
+      reserveData.variableVdTokenAddress,
       input.implementation,
       encodedCall
     );
 
-    emit VariableDebtTokenUpgraded(
+    emit VariableVdTokenUpgraded(
       input.asset,
-      reserveData.variableDebtTokenAddress,
+      reserveData.variableVdTokenAddress,
       input.implementation
     );
   }
@@ -433,11 +429,18 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
   }
 
   /**
-   * @dev pauses or unpauses all the actions of the protocol, including aToken transfers
+   * @dev pauses or unpauses all the actions of the protocol, including viToken transfers
    * @param val true if protocol needs to be paused, false otherwise
    **/
   function setPoolPause(bool val) external onlyEmergencyAdmin {
     pool.setPause(val);
+  }
+
+  function setIncentivesController(address asset, address incentivesController)
+    external
+    onlyEmergencyAdmin
+  {
+    pool.setIncentivesController(asset, incentivesController);
   }
 
   function _initTokenWithProxy(address implementation, bytes memory initParams)
@@ -468,7 +471,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
   function _checkNoLiquidity(address asset) internal view {
     DataTypes.ReserveData memory reserveData = pool.getReserveData(asset);
 
-    uint256 availableLiquidity = IERC20Detailed(asset).balanceOf(reserveData.aTokenAddress);
+    uint256 availableLiquidity = IERC20Detailed(asset).balanceOf(reserveData.viTokenAddress);
 
     require(
       availableLiquidity == 0 && reserveData.currentLiquidityRate == 0,

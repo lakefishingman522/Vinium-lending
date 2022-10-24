@@ -6,7 +6,7 @@ import {DataTypes} from '../types/DataTypes.sol';
 
 /**
  * @title Helpers library
- * @author Vini
+ * @author Vinium
  */
 library Helpers {
   /**
@@ -21,8 +21,8 @@ library Helpers {
     returns (uint256, uint256)
   {
     return (
-      IERC20(reserve.stableDebtTokenAddress).balanceOf(user),
-      IERC20(reserve.variableDebtTokenAddress).balanceOf(user)
+      IERC20(reserve.stableVdTokenAddress).balanceOf(user),
+      IERC20(reserve.variableVdTokenAddress).balanceOf(user)
     );
   }
 
@@ -32,8 +32,8 @@ library Helpers {
     returns (uint256, uint256)
   {
     return (
-      IERC20(reserve.stableDebtTokenAddress).balanceOf(user),
-      IERC20(reserve.variableDebtTokenAddress).balanceOf(user)
+      IERC20(reserve.stableVdTokenAddress).balanceOf(user),
+      IERC20(reserve.variableVdTokenAddress).balanceOf(user)
     );
   }
 }

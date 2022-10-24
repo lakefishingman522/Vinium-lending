@@ -7,13 +7,13 @@ import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
 import {SafeERC20} from '../../dependencies/openzeppelin/contracts/SafeERC20.sol';
 import {Address} from '../../dependencies/openzeppelin/contracts/Address.sol';
 import {ILendingPoolAddressesProvider} from '../../interfaces/ILendingPoolAddressesProvider.sol';
-import {IAToken} from '../../interfaces/IAToken.sol';
-import {IVariableDebtToken} from '../../interfaces/IVariableDebtToken.sol';
+import {IViToken} from '../../interfaces/IViToken.sol';
+import {IVariableVdToken} from '../../interfaces/IVariableVdToken.sol';
 import {IFlashLoanReceiver} from '../../flashloan/interfaces/IFlashLoanReceiver.sol';
 import {IPriceOracleGetter} from '../../interfaces/IPriceOracleGetter.sol';
-import {IStableDebtToken} from '../../interfaces/IStableDebtToken.sol';
+import {IStableVdToken} from '../../interfaces/IStableVdToken.sol';
 import {ILendingPool} from '../../interfaces/ILendingPool.sol';
-import {VersionedInitializable} from '../libraries/vini-upgradeability/VersionedInitializable.sol';
+import {VersionedInitializable} from '../libraries/vinium-upgradeability/VersionedInitializable.sol';
 import {Helpers} from '../libraries/helpers/Helpers.sol';
 import {Errors} from '../libraries/helpers/Errors.sol';
 import {WadRayMath} from '../libraries/math/WadRayMath.sol';
@@ -25,10 +25,11 @@ import {ReserveConfiguration} from '../libraries/configuration/ReserveConfigurat
 import {UserConfiguration} from '../libraries/configuration/UserConfiguration.sol';
 import {DataTypes} from '../libraries/types/DataTypes.sol';
 import {LendingPoolStorage} from './LendingPoolStorage.sol';
+import {IViniumIncentivesController} from '../../interfaces/IViniumIncentivesController.sol';
 
 /**
  * @title LendingPool contract
- * @dev Main point of interaction with an Vini protocol's market
+ * @dev Main point of interaction with an Vinium protocol's market
  * - Users can:
  *   # Deposit
  *   # Withdraw
@@ -41,7 +42,7 @@ import {LendingPoolStorage} from './LendingPoolStorage.sol';
  * - To be covered by a proxy contract, owned by the LendingPoolAddressesProvider of the specific market
  * - All admin functions are callable by the LendingPoolConfigurator contract defined also in the
  *   LendingPoolAddressesProvider
- * @author Vini
+ * @author Vinium
  **/
 contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage {
   using SafeMath for uint256;
@@ -91,12 +92,12 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   }
 
   /**
-   * @dev Deposits an `amount` of underlying asset into the reserve, receiving in return overlying aTokens.
+   * @dev Deposits an `amount` of underlying asset into the reserve, receiving in return overlying viTokens.
    * - E.g. User deposits 100 USDC and gets in return 100 aUSDC
    * @param asset The address of the underlying asset to deposit
    * @param amount The amount to be deposited
-   * @param onBehalfOf The address that will receive the aTokens, same as msg.sender if the user
-   *   wants to receive them on his own wallet, or a different address if the beneficiary of aTokens
+   * @param onBehalfOf The address that will receive the viTokens, same as msg.sender if the user
+   *   wants to receive them on his own wallet, or a different address if the beneficiary of viTokens
    *   is a different wallet
    * @param referralCode Code used to register the integrator originating the operation, for potential rewards.
    *   0 if the action is executed directly by the user, without any middle-man
@@ -111,14 +112,14 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
     ValidationLogic.validateDeposit(reserve, amount);
 
-    address aToken = reserve.aTokenAddress;
+    address viToken = reserve.viTokenAddress;
 
     reserve.updateState();
-    reserve.updateInterestRates(asset, aToken, amount, 0);
+    reserve.updateInterestRates(asset, viToken, amount, 0);
 
-    IERC20(asset).safeTransferFrom(msg.sender, aToken, amount);
+    IERC20(asset).safeTransferFrom(msg.sender, viToken, amount);
 
-    bool isFirstDeposit = IAToken(aToken).mint(onBehalfOf, amount, reserve.liquidityIndex);
+    bool isFirstDeposit = IViToken(viToken).mint(onBehalfOf, amount, reserve.liquidityIndex);
 
     if (isFirstDeposit) {
       _usersConfig[onBehalfOf].setUsingAsCollateral(reserve.id, true);
@@ -129,11 +130,11 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   }
 
   /**
-   * @dev Withdraws an `amount` of underlying asset from the reserve, burning the equivalent aTokens owned
+   * @dev Withdraws an `amount` of underlying asset from the reserve, burning the equivalent viTokens owned
    * E.g. User has 100 aUSDC, calls withdraw() and receives 100 USDC, burning the 100 aUSDC
    * @param asset The address of the underlying asset to withdraw
    * @param amount The underlying amount to be withdrawn
-   *   - Send the value type(uint256).max in order to withdraw the whole aToken balance
+   *   - Send the value type(uint256).max in order to withdraw the whole viToken balance
    * @param to Address that will receive the underlying, same as msg.sender if the user
    *   wants to receive it on his own wallet, or a different address if the beneficiary is a
    *   different wallet
@@ -146,9 +147,9 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   ) external override whenNotPaused returns (uint256) {
     DataTypes.ReserveData storage reserve = _reserves[asset];
 
-    address aToken = reserve.aTokenAddress;
+    address viToken = reserve.viTokenAddress;
 
-    uint256 userBalance = IAToken(aToken).balanceOf(msg.sender);
+    uint256 userBalance = IViToken(viToken).balanceOf(msg.sender);
 
     uint256 amountToWithdraw = amount;
 
@@ -169,14 +170,14 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
     reserve.updateState();
 
-    reserve.updateInterestRates(asset, aToken, 0, amountToWithdraw);
+    reserve.updateInterestRates(asset, viToken, 0, amountToWithdraw);
 
     if (amountToWithdraw == userBalance) {
       _usersConfig[msg.sender].setUsingAsCollateral(reserve.id, false);
       emit ReserveUsedAsCollateralDisabled(asset, msg.sender);
     }
 
-    IAToken(aToken).burn(msg.sender, to, amountToWithdraw, reserve.liquidityIndex);
+    IViToken(viToken).burn(msg.sender, to, amountToWithdraw, reserve.liquidityIndex);
 
     emit Withdraw(asset, msg.sender, to, amountToWithdraw);
 
@@ -186,7 +187,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   /**
    * @dev Allows users to borrow a specific `amount` of the reserve underlying asset, provided that the borrower
    * already deposited enough collateral, or he was given enough allowance by a credit delegator on the
-   * corresponding debt token (StableDebtToken or VariableDebtToken)
+   * corresponding debt token (StableVdToken or VariableVdToken)
    * - E.g. User borrows 100 USDC passing as `onBehalfOf` his own address, receiving the 100 USDC in his wallet
    *   and 100 stable/variable debt tokens, depending on the `interestRateMode`
    * @param asset The address of the underlying asset to borrow
@@ -214,7 +215,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         onBehalfOf,
         amount,
         interestRateMode,
-        reserve.aTokenAddress,
+        reserve.viTokenAddress,
         referralCode,
         true
       )
@@ -265,25 +266,25 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     reserve.updateState();
 
     if (interestRateMode == DataTypes.InterestRateMode.STABLE) {
-      IStableDebtToken(reserve.stableDebtTokenAddress).burn(onBehalfOf, paybackAmount);
+      IStableVdToken(reserve.stableVdTokenAddress).burn(onBehalfOf, paybackAmount);
     } else {
-      IVariableDebtToken(reserve.variableDebtTokenAddress).burn(
+      IVariableVdToken(reserve.variableVdTokenAddress).burn(
         onBehalfOf,
         paybackAmount,
         reserve.variableBorrowIndex
       );
     }
 
-    address aToken = reserve.aTokenAddress;
-    reserve.updateInterestRates(asset, aToken, paybackAmount, 0);
+    address viToken = reserve.viTokenAddress;
+    reserve.updateInterestRates(asset, viToken, paybackAmount, 0);
 
     if (stableDebt.add(variableDebt).sub(paybackAmount) == 0) {
       _usersConfig[onBehalfOf].setBorrowing(reserve.id, false);
     }
 
-    IERC20(asset).safeTransferFrom(msg.sender, aToken, paybackAmount);
+    IERC20(asset).safeTransferFrom(msg.sender, viToken, paybackAmount);
 
-    IAToken(aToken).handleRepayment(msg.sender, paybackAmount);
+    IViToken(viToken).handleRepayment(msg.sender, paybackAmount);
 
     emit Repay(asset, onBehalfOf, msg.sender, paybackAmount);
 
@@ -313,20 +314,20 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     reserve.updateState();
 
     if (interestRateMode == DataTypes.InterestRateMode.STABLE) {
-      IStableDebtToken(reserve.stableDebtTokenAddress).burn(msg.sender, stableDebt);
-      IVariableDebtToken(reserve.variableDebtTokenAddress).mint(
+      IStableVdToken(reserve.stableVdTokenAddress).burn(msg.sender, stableDebt);
+      IVariableVdToken(reserve.variableVdTokenAddress).mint(
         msg.sender,
         msg.sender,
         stableDebt,
         reserve.variableBorrowIndex
       );
     } else {
-      IVariableDebtToken(reserve.variableDebtTokenAddress).burn(
+      IVariableVdToken(reserve.variableVdTokenAddress).burn(
         msg.sender,
         variableDebt,
         reserve.variableBorrowIndex
       );
-      IStableDebtToken(reserve.stableDebtTokenAddress).mint(
+      IStableVdToken(reserve.stableVdTokenAddress).mint(
         msg.sender,
         msg.sender,
         variableDebt,
@@ -334,7 +335,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       );
     }
 
-    reserve.updateInterestRates(asset, reserve.aTokenAddress, 0, 0);
+    reserve.updateInterestRates(asset, reserve.viTokenAddress, 0, 0);
 
     emit Swap(asset, msg.sender, rateMode);
   }
@@ -351,31 +352,31 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   function rebalanceStableBorrowRate(address asset, address user) external override whenNotPaused {
     DataTypes.ReserveData storage reserve = _reserves[asset];
 
-    IERC20 stableDebtToken = IERC20(reserve.stableDebtTokenAddress);
-    IERC20 variableDebtToken = IERC20(reserve.variableDebtTokenAddress);
-    address aTokenAddress = reserve.aTokenAddress;
+    IERC20 stableVdToken = IERC20(reserve.stableVdTokenAddress);
+    IERC20 variableVdToken = IERC20(reserve.variableVdTokenAddress);
+    address viTokenAddress = reserve.viTokenAddress;
 
-    uint256 stableDebt = IERC20(stableDebtToken).balanceOf(user);
+    uint256 stableDebt = IERC20(stableVdToken).balanceOf(user);
 
     ValidationLogic.validateRebalanceStableBorrowRate(
       reserve,
       asset,
-      stableDebtToken,
-      variableDebtToken,
-      aTokenAddress
+      stableVdToken,
+      variableVdToken,
+      viTokenAddress
     );
 
     reserve.updateState();
 
-    IStableDebtToken(address(stableDebtToken)).burn(user, stableDebt);
-    IStableDebtToken(address(stableDebtToken)).mint(
+    IStableVdToken(address(stableVdToken)).burn(user, stableDebt);
+    IStableVdToken(address(stableVdToken)).mint(
       user,
       user,
       stableDebt,
       reserve.currentStableBorrowRate
     );
 
-    reserve.updateInterestRates(asset, aTokenAddress, 0, 0);
+    reserve.updateInterestRates(asset, viTokenAddress, 0, 0);
 
     emit RebalanceStableBorrowRate(asset, user);
   }
@@ -420,7 +421,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
    * @param debtAsset The address of the underlying borrowed asset to be repaid with the liquidation
    * @param user The address of the borrower getting liquidated
    * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover
-   * @param receiveAToken `true` if the liquidators wants to receive the collateral aTokens, `false` if he wants
+   * @param receiveViToken `true` if the liquidators wants to receive the collateral viTokens, `false` if he wants
    * to receive the underlying collateral asset directly
    **/
   function liquidationCall(
@@ -428,7 +429,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     address debtAsset,
     address user,
     uint256 debtToCover,
-    bool receiveAToken
+    bool receiveViToken
   ) external override whenNotPaused {
     address collateralManager = _addressesProvider.getLendingPoolCollateralManager();
 
@@ -440,7 +441,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         debtAsset,
         user,
         debtToCover,
-        receiveAToken
+        receiveViToken
       )
     );
 
@@ -456,18 +457,18 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     address oracle;
     uint256 i;
     address currentAsset;
-    address currentATokenAddress;
+    address currentViTokenAddress;
     uint256 currentAmount;
     uint256 currentPremium;
     uint256 currentAmountPlusPremium;
-    address debtToken;
+    address vdToken;
   }
 
   /**
    * @dev Allows smartcontracts to access the liquidity of the pool within one transaction,
    * as long as the amount taken plus a fee is returned.
    * IMPORTANT There are security concerns for developers of flashloan receiver contracts that must be kept into consideration.
-   * For further details please visit https://developers.vini.com
+   * For further details please visit https://developers.vinium.com
    * @param receiverAddress The address of the contract receiving the funds, implementing the IFlashLoanReceiver interface
    * @param assets The addresses of the assets being flash-borrowed
    * @param amounts The amounts amounts being flash-borrowed
@@ -493,17 +494,17 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
     ValidationLogic.validateFlashloan(assets, amounts);
 
-    address[] memory aTokenAddresses = new address[](assets.length);
+    address[] memory viTokenAddresses = new address[](assets.length);
     uint256[] memory premiums = new uint256[](assets.length);
 
     vars.receiver = IFlashLoanReceiver(receiverAddress);
 
     for (vars.i = 0; vars.i < assets.length; vars.i++) {
-      aTokenAddresses[vars.i] = _reserves[assets[vars.i]].aTokenAddress;
+      viTokenAddresses[vars.i] = _reserves[assets[vars.i]].viTokenAddress;
 
       premiums[vars.i] = amounts[vars.i].mul(_flashLoanPremiumTotal).div(10000);
 
-      IAToken(aTokenAddresses[vars.i]).transferUnderlyingTo(receiverAddress, amounts[vars.i]);
+      IViToken(viTokenAddresses[vars.i]).transferUnderlyingTo(receiverAddress, amounts[vars.i]);
     }
 
     require(
@@ -515,25 +516,25 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       vars.currentAsset = assets[vars.i];
       vars.currentAmount = amounts[vars.i];
       vars.currentPremium = premiums[vars.i];
-      vars.currentATokenAddress = aTokenAddresses[vars.i];
+      vars.currentViTokenAddress = viTokenAddresses[vars.i];
       vars.currentAmountPlusPremium = vars.currentAmount.add(vars.currentPremium);
 
       if (DataTypes.InterestRateMode(modes[vars.i]) == DataTypes.InterestRateMode.NONE) {
         _reserves[vars.currentAsset].updateState();
         _reserves[vars.currentAsset].cumulateToLiquidityIndex(
-          IERC20(vars.currentATokenAddress).totalSupply(),
+          IERC20(vars.currentViTokenAddress).totalSupply(),
           vars.currentPremium
         );
         _reserves[vars.currentAsset].updateInterestRates(
           vars.currentAsset,
-          vars.currentATokenAddress,
+          vars.currentViTokenAddress,
           vars.currentAmountPlusPremium,
           0
         );
 
         IERC20(vars.currentAsset).safeTransferFrom(
           receiverAddress,
-          vars.currentATokenAddress,
+          vars.currentViTokenAddress,
           vars.currentAmountPlusPremium
         );
       } else {
@@ -546,7 +547,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
             onBehalfOf,
             vars.currentAmount,
             modes[vars.i],
-            vars.currentATokenAddress,
+            vars.currentViTokenAddress,
             referralCode,
             false
           )
@@ -727,14 +728,14 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   }
 
   /**
-   * @dev Validates and finalizes an aToken transfer
-   * - Only callable by the overlying aToken of the `asset`
-   * @param asset The address of the underlying asset of the aToken
-   * @param from The user from which the aTokens are transferred
-   * @param to The user receiving the aTokens
+   * @dev Validates and finalizes an viToken transfer
+   * - Only callable by the overlying viToken of the `asset`
+   * @param asset The address of the underlying asset of the viToken
+   * @param from The user from which the viTokens are transferred
+   * @param to The user receiving the viTokens
    * @param amount The amount being transferred/withdrawn
-   * @param balanceFromBefore The aToken balance of the `from` user before the transfer
-   * @param balanceToBefore The aToken balance of the `to` user before the transfer
+   * @param balanceFromBefore The viToken balance of the `from` user before the transfer
+   * @param balanceToBefore The viToken balance of the `to` user before the transfer
    */
   function finalizeTransfer(
     address asset,
@@ -744,7 +745,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     uint256 balanceFromBefore,
     uint256 balanceToBefore
   ) external override whenNotPaused {
-    require(msg.sender == _reserves[asset].aTokenAddress, Errors.LP_CALLER_MUST_BE_AN_ATOKEN);
+    require(msg.sender == _reserves[asset].viTokenAddress, Errors.LP_CALLER_MUST_BE_AN_VITOKEN);
 
     ValidationLogic.validateTransfer(
       from,
@@ -773,25 +774,25 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   }
 
   /**
-   * @dev Initializes a reserve, activating it, assigning an aToken and debt tokens and an
+   * @dev Initializes a reserve, activating it, assigning an viToken and debt tokens and an
    * interest rate strategy
    * - Only callable by the LendingPoolConfigurator contract
    * @param asset The address of the underlying asset of the reserve
-   * @param aTokenAddress The address of the aToken that will be assigned to the reserve
-   * @param stableDebtAddress The address of the StableDebtToken that will be assigned to the reserve
-   * @param aTokenAddress The address of the VariableDebtToken that will be assigned to the reserve
+   * @param viTokenAddress The address of the viToken that will be assigned to the reserve
+   * @param stableDebtAddress The address of the StableVdToken that will be assigned to the reserve
+   * @param viTokenAddress The address of the VariableVdToken that will be assigned to the reserve
    * @param interestRateStrategyAddress The address of the interest rate strategy contract
    **/
   function initReserve(
     address asset,
-    address aTokenAddress,
+    address viTokenAddress,
     address stableDebtAddress,
     address variableDebtAddress,
     address interestRateStrategyAddress
   ) external override onlyLendingPoolConfigurator {
     require(Address.isContract(asset), Errors.LP_NOT_CONTRACT);
     _reserves[asset].init(
-      aTokenAddress,
+      viTokenAddress,
       stableDebtAddress,
       variableDebtAddress,
       interestRateStrategyAddress
@@ -811,6 +812,22 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     onlyLendingPoolConfigurator
   {
     _reserves[asset].interestRateStrategyAddress = rateStrategyAddress;
+  }
+
+  function setIncentivesController(address asset, address incentivesController)
+    external
+    override
+    onlyLendingPoolConfigurator
+  {
+    IViToken(_reserves[asset].viTokenAddress).setIncentivesController(
+      IViniumIncentivesController(incentivesController)
+    );
+    IVariableVdToken(_reserves[asset].variableVdTokenAddress).setIncentivesController(
+      IViniumIncentivesController(incentivesController)
+    );
+    IStableVdToken(_reserves[asset].stableVdTokenAddress).setIncentivesController(
+      IViniumIncentivesController(incentivesController)
+    );
   }
 
   /**
@@ -847,7 +864,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     address onBehalfOf;
     uint256 amount;
     uint256 interestRateMode;
-    address aTokenAddress;
+    address viTokenAddress;
     uint16 referralCode;
     bool releaseUnderlying;
   }
@@ -885,14 +902,14 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     if (DataTypes.InterestRateMode(vars.interestRateMode) == DataTypes.InterestRateMode.STABLE) {
       currentStableRate = reserve.currentStableBorrowRate;
 
-      isFirstBorrowing = IStableDebtToken(reserve.stableDebtTokenAddress).mint(
+      isFirstBorrowing = IStableVdToken(reserve.stableVdTokenAddress).mint(
         vars.user,
         vars.onBehalfOf,
         vars.amount,
         currentStableRate
       );
     } else {
-      isFirstBorrowing = IVariableDebtToken(reserve.variableDebtTokenAddress).mint(
+      isFirstBorrowing = IVariableVdToken(reserve.variableVdTokenAddress).mint(
         vars.user,
         vars.onBehalfOf,
         vars.amount,
@@ -906,13 +923,13 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
     reserve.updateInterestRates(
       vars.asset,
-      vars.aTokenAddress,
+      vars.viTokenAddress,
       0,
       vars.releaseUnderlying ? vars.amount : 0
     );
 
     if (vars.releaseUnderlying) {
-      IAToken(vars.aTokenAddress).transferUnderlyingTo(vars.user, vars.amount);
+      IViToken(vars.viTokenAddress).transferUnderlyingTo(vars.user, vars.amount);
     }
 
     emit Borrow(
