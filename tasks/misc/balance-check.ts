@@ -5,6 +5,7 @@ import { DRE } from '../../helpers/misc-utils';
 task('balance-check', 'Checks deployer balance').setAction(async ({}, localBRE) => {
   await localBRE.run('set-DRE');
 
+  // @ts-ignore
   const signers = await DRE.ethers.getSigners();
   const deployer = signers[0];
   const proxyAdmin = signers[1];
@@ -22,7 +23,6 @@ task('balance-check', 'Checks deployer balance').setAction(async ({}, localBRE) 
   }
 
   console.log('\nAccounts');
-  console.log('========');
   console.table({
     deployer: formatEther(await deployer.getBalance()),
     proxyAdmin: formatEther(await proxyAdmin.getBalance()),

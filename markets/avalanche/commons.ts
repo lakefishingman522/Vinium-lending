@@ -88,7 +88,7 @@ export const CommonsConfig: ICommonConfiguration = {
     [eAvalancheNetwork.fuji]: '',
   },
   LendingRateOracle: {
-    [eAvalancheNetwork.avalanche]: '',
+    [eAvalancheNetwork.avalanche]: '0xCA3eb6E8c67a2B00C5B35E0Fd469d50712017279',
     [eAvalancheNetwork.fuji]: '',
   },
   LendingPoolCollateralManager: {
@@ -112,7 +112,7 @@ export const CommonsConfig: ICommonConfiguration = {
     [eAvalancheNetwork.fuji]: '',
   },
   ViniumOracle: {
-    [eAvalancheNetwork.avalanche]: '',
+    [eAvalancheNetwork.avalanche]: '0xFC5C922b6A0137FD33E3604663aB468D15C9d4f5',
     [eAvalancheNetwork.fuji]: '',
   },
   FallbackOracle: {
