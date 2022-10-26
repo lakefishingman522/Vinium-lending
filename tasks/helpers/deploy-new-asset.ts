@@ -1,5 +1,5 @@
 import { task } from 'hardhat/config';
-import { eEthereumNetwork } from '../../helpers/types';
+import { eEthereumNetwork, ICommonConfiguration } from '../../helpers/types';
 import { getTreasuryAddress } from '../../helpers/configuration';
 import * as marketConfigs from '../../markets/avalanche';
 import * as reserveConfigs from '../../markets/avalanche/reservesConfigs';
@@ -12,6 +12,7 @@ import {
 } from './../../helpers/contracts-deployments';
 import { setDRE } from '../../helpers/misc-utils';
 import { ZERO_ADDRESS } from './../../helpers/constants';
+import AvalancheConfig from '../../markets/avalanche';
 
 const LENDING_POOL_ADDRESS_PROVIDER = {
   main: '0xb53c1a33016b2dc2ff3653530bff1848a515c8c5',
@@ -20,13 +21,16 @@ const LENDING_POOL_ADDRESS_PROVIDER = {
 
 const isSymbolValid = (symbol: string, network: eEthereumNetwork) =>
   Object.keys(reserveConfigs).includes('strategy' + symbol) &&
-  marketConfigs.ViniumConfig.ReserveAssets[network][symbol] &&
-  marketConfigs.ViniumConfig.ReservesConfig[symbol] === reserveConfigs['strategy' + symbol];
+  marketConfigs.AvalancheConfig.ReserveAssets[network][symbol] &&
+  marketConfigs.AvalancheConfig.ReservesConfig[symbol] === reserveConfigs['strategy' + symbol];
 
 task('external:deploy-new-asset', 'Deploy A token, Debt Tokens, Risk Parameters')
   .addParam('symbol', `Asset symbol, needs to have configuration ready`)
   .addFlag('verify', 'Verify contracts at Etherscan')
   .setAction(async ({ verify, symbol }, localBRE) => {
+    const { ViTokenNamePrefix, StableVdTokenNamePrefix, VariableVdTokenNamePrefix, ReserveAssets } =
+      marketConfigs.AvalancheConfig;
+
     const network = localBRE.network.name;
     if (!isSymbolValid(symbol, network as eEthereumNetwork)) {
       throw new Error(
@@ -40,8 +44,7 @@ WRONG RESERVE ASSET SETUP:
     }
     setDRE(localBRE);
     const strategyParams = reserveConfigs['strategy' + symbol];
-    const reserveAssetAddress =
-      marketConfigs.ViniumConfig.ReserveAssets[localBRE.network.name][symbol];
+    const reserveAssetAddress = ReserveAssets[localBRE.network.name][symbol];
     const deployCustomViToken = chooseViTokenDeployment(strategyParams.viTokenImpl);
     const addressProvider = await getLendingPoolAddressesProvider(
       LENDING_POOL_ADDRESS_PROVIDER[network]
@@ -53,8 +56,8 @@ WRONG RESERVE ASSET SETUP:
         poolAddress,
         reserveAssetAddress,
         ZERO_ADDRESS, // Incentives Controller
-        `Vinium stable debt bearing ${symbol}`,
-        `stableDebt${symbol}`,
+        `${StableVdTokenNamePrefix} ${symbol}`,
+        `stableVd${symbol}`,
       ],
       verify
     );
@@ -63,8 +66,8 @@ WRONG RESERVE ASSET SETUP:
         poolAddress,
         reserveAssetAddress,
         ZERO_ADDRESS, // Incentives Controller
-        `Vinium variable debt bearing ${symbol}`,
-        `variableDebt${symbol}`,
+        `${VariableVdTokenNamePrefix} ${symbol}`,
+        `variableVd${symbol}`,
       ],
       verify
     );

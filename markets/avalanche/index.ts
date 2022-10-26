@@ -8,13 +8,14 @@ import {
   strategyDAI,
   strategyWETH,
   strategyBTCB,
-  strategyGRAPE,
+  strategyGRAPE, strategyWAVAX,
 } from './reservesConfigs';
 
 // ----------------
 // POOL--SPECIFIC PARAMS
 // ----------------
 
+// @ts-ignore
 export const AvalancheConfig: IAvalancheConfiguration = {
   ...CommonsConfig,
   MarketId: 'Avalanche market',
@@ -27,6 +28,7 @@ export const AvalancheConfig: IAvalancheConfiguration = {
     WETH: strategyWETH,
     BTCB: strategyBTCB,
     GRAPE: strategyGRAPE,
+    WAVAX: strategyWAVAX,
   },
   ReserveAssets: {
     [eAvalancheNetwork.avalanche]: {
@@ -35,13 +37,9 @@ export const AvalancheConfig: IAvalancheConfiguration = {
       USDT: '0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7',
       DAI: '0xd586e7f844cea2f87f50152665bcbc2c279d8d70',
       WETH: '0x49d5c2bdffac6ce2bfdb6640f4f80f226bc10bab',
-      // BTCB: '0x152b9d0FdC40C096757F570A51E494bd4b943E50',
-      // GRAPE: '0x5541D83EFaD1f281571B343977648B75d95cdAC2',
-      // USDT: '0xc7198437980c041c805a1edcba50c1ce5db95118',
-      // USDC: '0xa7d7079b0fead91f3e65f86e8915cb59c1a4c664',
-      // VINIUM: '0x63a72806098bd3d9520cc43356dd78afe5d386d9',
-      // WBTC: '0x50b7545627a5162f82a992c33b87adc75187b218',
-      // WAVAX: '0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7',
+      BTCB: '0x152b9d0FdC40C096757F570A51E494bd4b943E50',
+      GRAPE: '0x5541D83EFaD1f281571B343977648B75d95cdAC2',
+      WAVAX: '0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7',
     },
     [eAvalancheNetwork.fuji]: {
       WETH: '0x9668f5f55f2712Dd2dfa316256609b516292D554', // MintableERC20 token
